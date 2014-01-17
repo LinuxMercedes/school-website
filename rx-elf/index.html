@@ -1,0 +1,43 @@
+<html>
+<head>
+<title>RX62N GNU Toolchain</title>
+</head>
+<body>
+<a href="..">Home</a> <a href="../misc.html">Misc</a>
+<p>Here's the so-far GNU toolchain for the RX62N cpu, and in specific the RPBRX62N board. It is so far untested and probably nonfunctional for the rpbrx62n, but it probably works for some of the other rx62n dev boards. </p>
+<p> <a href="rx-elf.tar.xz">Download</a></p>
+<p> Program versions:
+<ul>
+<li> binutils-2.22.52.20120423 (cvs snapshot to provide -mpid for newlib) </li>
+<li> gmp-4.3.2 </li>
+<li> mpfr-3.1.0 </li>
+<li> mpc-0.9 </li>
+<li> newlib-1.20.0 </li>
+<li> gcc-4.7.0 </li>
+<li> gdb-4.7 </li>
+<li> rx-stick flash util </li>
+</ul>
+</p>
+<p> Details:
+<ul>
+<li>PREFIX=/usr/local/rx-elf</li>
+<li>CFLAGS="-O2"</li>
+<li>target=rx-elf</li>
+<li>languages: c,c++</li>
+</ul>
+As such, it's not very optimized for the board right now. I'll be rebuilding in a bit once I've figured out what options are good for this specific board. In particular, newlib can support hardware floating point, and -fomit-frame-pointer would probably save us some memory/registers.<br>
+I also suspect that some of the basic pin mappings and other chip- and board-specific configs may be wrong, or not provided for the rpb. If that is the case, I'll be fixing that as soon as possible.
+</p>
+<p> Flashing: <br>
+Currently, I'm figuring out how to flash the board. The executables rxs and rxusb should attempt to flash via serial or usb, but they are intended for a different rx62n dev board. Neither detects the rpb when connected via either usb port. <br>
+<a href="http://www.delorie.com/electronics/rx-stick/">Flash util source (and toolchain build tutorial)</a>
+</p>
+<p> Not completed:
+<ul>
+<li> Flashing the board </li>
+<li> Segger debugger circuit (is this even going to be possible?) </li>
+</ul>
+</p>
+</body>
+</html>
+
