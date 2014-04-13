@@ -1,7 +1,8 @@
 {
 	"configs" : {
 		"base" : {
-			"location" : "/mnt/dfs/nmjxv3/userweb/nmjxv3"
+			"location" : "/home/ubuntu/src/school-website",
+			"script" : ".build.sh"
 			}
 	}
 }
