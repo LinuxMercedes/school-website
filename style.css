@@ -1,15 +1,15 @@
+body {
+max-width: 1000px;
+}
 a:link {
-	color: #000000;
+color: #000000;
 }
-
 a:visited {
-	color: #880000;
+color: #880000;
 }
-
 a:hover {
-	color: #FF0000;
+color: #FF0000;
 }
-
 a:active {
-	color: #DD0000;
+color: #DD0000;
 }
