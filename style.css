@@ -1,15 +1,26 @@
 body {
-max-width: 1000px;
+	max-width: 700px;
+	padding: 15px;
+	margin: 0 auto !important;
+	float: none !important;
 }
 a:link {
-color: #000000;
+	color: #000000;
 }
 a:visited {
-color: #880000;
+	color: #880000;
 }
 a:hover {
-color: #FF0000;
+	color: #FF0000;
 }
 a:active {
-color: #DD0000;
+	color: #DD0000;
+}
+h3 { 
+	display: inline;
+}
+.mug {
+	float: right;
+	padding: 15px;
+	margin-left:50px;
 }
