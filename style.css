@@ -24,3 +24,17 @@ h3 {
 	padding: 15px;
 	margin-left:50px;
 }
+
+table,th,td {
+	border-bottom: 1px solid black;
+	border-collapse: collapse;
+}
+th,td {
+	vertical-align: top;
+	padding:5px;
+}
+tr:nth-child(even) {background-color: #f2f2f2}
+
+pre {
+	margin:0px;
+}
