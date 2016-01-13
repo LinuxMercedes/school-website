@@ -1,0 +1,3 @@
+[submodule "hott-notes"]
+	path = hott-notes
+	url = git@github.com:LinuxMercedes/hott-notes.git
