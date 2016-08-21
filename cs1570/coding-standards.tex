@@ -1,0 +1,478 @@
+\documentclass{article}
+
+\usepackage{textcomp}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=false,
+allbordercolors={0 0 0},
+linkbordercolor={1 1 1},
+pdfborderstyle={/S/U/W 1},
+} % Set link colors throughout the document
+
+\usepackage{listings}
+\lstset{%
+	language=C++,
+	frame=single,
+	backgroundcolor=\color{gray!30},
+	commentstyle=\ttfamily,
+	tabsize=2
+}
+
+\usepackage{xcolor}
+\newcommand{\code}[1]{\texttt{\colorbox{gray!30}{#1}}}
+
+\title{Missouri S\&T Computer Science Department C++ Coding Standard}
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+\subsection{Why do we need a coding standard?}
+A coding standard is desirable for a couple of reasons:
+
+\begin{itemize}
+	\item Most software companies enforce some kind of coding standard, so this is good experience preparing for a ``real-world'' environment.
+	\item Using a coding standard makes code more readable, making it easier for the graders to assist students with coding problems and allowing them to evaluate the code and return grades more quickly.
+	\item All code will be graded against the same standard, allowing for more uniform grading.
+\end{itemize}
+
+\subsection{Acknowledgements}
+Some elements of this document are inspired by Code Conventions for the Java\texttrademark{} Programming Language, revised April 20, 1999, available at: \url{http://java.sun.com/docs/codeconv/html/CodeConvTOC.doc.html}.
+
+\section{File Names}
+The purpose of the file should be easy to determine from its name.
+You may call your main implementation file \code{hw1.cpp} (Homework 1) or \code{main.cpp}, but other files (class header or implementation files) should be given more descriptive names.
+For instance, in the case of a class header, use the name of the class.
+
+\subsection{File extensions}
+\begin{tabular}{ll}
+	\textbf{Header files:} & \code{.h} \\
+	\textbf{Implementation files:} & \code{.cpp} \\
+	\textbf{Template implementation files:} & \code{.hpp} \\
+\end{tabular}
+
+\subsection{Examples of valid filenames}
+\begin{tabular}{ll}
+	\textbf{Filename} & \textbf{Contents} \\
+	\code{main.cpp} & \code{int main()} function for the assignment \\
+	\code{hw1.cpp} & \code{int main()} function for assignment 1 \\
+	\code{vector.cpp} & Member function implementations for a non-templated vector class \\
+	\code{vector.hpp} & Member function implementations for a templated vector class \\
+	\code{sl\_list.h} & Header file for a singly-linked list class \\
+\end{tabular}
+
+\section{Project Files}
+The files in your program will either be header or implementation files.
+Header files will contain all function prototypes and struct or class declarations.
+Implementation files contain the implementations of all functions (with the exception of set and get functions).
+
+Filenames for headers and implementations must match except for the extension.
+If your function is prototyped in a file called \code{foobar.h}, it must be implemented in \code{foobar.cpp}.
+
+At most, every line in your file should be less than 80 characters wide (including indentations).
+This is a standard display width for most terminals.
+
+\subsection{Header files}
+Header files must always contain lines similar to the following before any other lines of code:
+\begin{lstlisting}
+#ifndef FILENAME_EXTENSION
+#define FILENAME_EXTENSION
+\end{lstlisting}
+
+Adding these lines ensures that if a header file is \code{\#include}d by more than one implementation file, the code it contains is only included and compiled once.
+
+By standard C++ programming conventions, the \code{\#define} value is ``FILENAME underscore EXTENSION''.
+For example, in the \code{vector.h} above, the appropriate lines are:
+
+\begin{lstlisting}
+#ifndef VECTOR_H
+#define VECTOR_H
+\end{lstlisting}
+
+The last line of every header file should be:
+
+\begin{lstlisting}
+#endif
+\end{lstlisting}
+
+Alternatively, you may place the following at the top of a header file:
+\begin{lstlisting}
+#pragma once
+\end{lstlisting}
+
+This eliminates the need for the \code{\#ifndef}/\code{\#define} as well as the \code{\#endif} at the end of the header file.
+While \code{\#pragma once} is not standard, it is supported by every commonly-used compiler.
+
+\subsection{Implementation files}
+\textbf{\code{.cpp} files should NEVER be \code{\#include}d.}
+\code{.hpp} files should be \code{\#include}d at the end of the header file that defines the associated template class immediately before the \code{\#endif}.
+
+\section{Comments}
+
+\subsection{Files}
+The very top of every file must have a comment block like the following:
+\begin{lstlisting}
+/*
+ * File: filename.cpp
+ * Author: Your name and your class and section number
+ * A brief description of the file's contents
+ */
+\end{lstlisting}
+
+\subsection{Classes}
+Before each class declaration (i.e.\ in the header file for each class), the following comment block must appear:
+\begin{lstlisting}
+/*
+ * Class: class_name
+ * A brief description of what the class does
+ */
+\end{lstlisting}
+
+\subsection{Functions}
+Both regular and member functions must be documented at the point of declaration(i.e.\ in a header file).
+When defining a class, the comment blocks will appear inside the class definition immediately above the member function they describe.
+
+\begin{lstlisting}
+/*
+ * Function: function_name
+ * A description of the function that includes any
+ *   information needed to use it
+ * Pre: The function's preconditions, in terms of
+ *   program variables and system state
+ * Post: The function's postconditions
+ * Param paramname1: A description of the first parameter
+ * Param paramname2: A description of the second parameter
+ * Return: A description of the return value
+ */
+\end{lstlisting}
+
+\subsection{Class member variables}
+Each class member variable should have a short comment describing its purpose:
+\begin{lstlisting}
+class list
+{
+	private:
+	int m_size; // Stores the number of nodes in the list
+};
+\end{lstlisting}
+
+\section{Naming conventions}
+The purpose of any variable, function, class, or struct should be obvious from its name.
+You are not required to use Hungarian notation (\code{intSize}, \code{strName}), but you are required to use descriptive names.
+
+You may choose to use underscores (\code{line\_count}, also known as `snake case') or mixed case (\code{lineCount}, also known as `camel case') names.
+
+You may only use single-letter variable names under the following conditions:
+\begin{itemize}
+	\item The purpose is obvious from the name, e.g.\ \code{x} and \code{y} for coordinates, or \code{w} and \code{h} for width and height
+	\item The variable is being used as a counter in a for or while loop, e.g.\\ \code{for(int i = 0; i < 10; i++)}
+\end{itemize}
+
+Global variables should not appear in your programs.
+Global constants ought to be named with all uppercase letters and underscores; for instance, \code{float PI=3.14159}.
+
+Names of variables and functions should begin with lower-case letters.
+Class names begin with upper-case letters.
+
+Template types should be named descriptively.
+\code{T} is acceptable as it is a common convention.
+\code{generic} is also acceptable since it is descriptive.
+
+\section{Formatting Statements}
+\subsection{Indenting}
+Every line inside a code block should be indented one level for easier readability.
+
+Do not use tabs to indent; use spaces instead.
+You may indent two or four spaces for each level, but you must be consistent across all the files in your program.
+Most editors can be configured to automaically indent your code as you type.
+
+\subsection{Simple statements}
+Each line should contain no more than one statement.
+For instance, this is not acceptable:
+\begin{lstlisting}
+argv++; argc--; // <-- NO!
+\end{lstlisting}
+
+Don't use the comma operator to group unrelated statements.
+\begin{lstlisting}
+cerr << "error", exit(1); // THIS IS ALSO BAD
+\end{lstlisting}
+
+\subsection{Blocks}
+Blocks consist of a list of statements enclosed in curly braces (\code{\{\}}).
+\begin{itemize}
+	\item The opening and closing braces should appear on their own lines at the indent level of code outside the block.
+	\item The statements inside the block should be indented one more level.
+	\item Braces should be included around all blocks, including blocks containing only one statement.
+		This prevents bugs caused by forgetting to add braces around a block when adding additional statements.
+\end{itemize}
+
+The following sections contain many examples of this formatting.
+
+\subsection{\code{return} statements}
+Every function, including \code{void} functions, must end with a \code{return} statement.
+
+Multiple return statements are allowed when sanity-checking arguments.
+Otherwise, you are strongly discouraged from using multiple return statements as it makes following the flow of the function difficult.
+For example,
+\begin{lstlisting}
+int divide(int num, int denom)
+{
+	if(denom == 0)
+	{
+		cerr << "Division by zero!";
+		return 0;
+	}
+
+	return num/denom;
+}
+\end{lstlisting}
+
+Return statements should use parentheses only when needed to make the return value clearer.
+\begin{lstlisting}
+return;
+return myDisk.size();
+return (size ? size : defaultSize);
+\end{lstlisting}
+
+\subsection{\code{if}, \code{if-else}, and \code{if-else-if-else} statements}
+These statements should have the following forms:
+\begin{lstlisting}
+if(condition)
+{
+	statements;
+}
+\end{lstlisting}
+\begin{lstlisting}
+if(condition)
+{
+	statements;
+}
+else
+{
+	statements;
+}
+\end{lstlisting}
+\begin{lstlisting}
+if(condition)
+{
+	statements;
+}
+else if(condition)
+{
+	statements;
+}
+else
+{
+	statements;
+}
+\end{lstlisting}
+
+Braces must be included even if there is only one statement in the block.
+Do not do this:
+\begin{lstlisting}
+if(condition)
+	statement;
+\end{lstlisting}
+
+\subsection{\code{for} statements}
+A \code{for} statement should have the following form:
+\begin{lstlisting}
+for(initialization; condition; update)
+{
+	statements;
+}
+\end{lstlisting}
+
+If a for loop is empty; that is, all the work in the for loop is done by the initialization, condition, and update clauses, you may format it as follows:
+\begin{lstlisting}
+for(initialization; condition; update);
+\end{lstlisting}
+
+When using the comma operator in the initialization or update clause of a for statement, avoid the complexity of using more than three variables.
+If needed, use separate statements before the for loop (for the initialization clause) or at the end of the loop (for the update clause).
+
+\subsection{\code{while} statements}
+A \code{while} statement should have the following form:
+\begin{lstlisting}
+while(condition)
+{
+	statements;
+}
+\end{lstlisting}
+
+An empty \code{while} statement may be formatted as follows:
+\begin{lstlisting}
+while(condition);
+\end{lstlisting}
+
+\subsection{\code{do-while} statements}
+\code{do-while} statements should have the following form:
+\begin{lstlisting}
+do
+{
+	statements;
+} while(condition);
+\end{lstlisting}
+
+This is the one exception to the rule that braces appear on their own lines.
+
+\subsection{\code{switch} statements}
+A \code{switch} statement should have the following form:
+\begin{lstlisting}
+switch(variable)
+{
+	case ABC:
+		statements;
+		/* falls through */
+	case DEF:
+		statements;
+		break;
+	case XYZ:
+		statements;
+		break;
+	default:
+		statements;
+		break;
+}
+\end{lstlisting}
+
+Every case that falls through (doesn't \code{break}) must include a comment where the \code{break} statement would usually appear stating as much.
+This makes it easy to spot bugs where the \code{break} statement was accidentally omitted.
+
+Every \code{switch} should contain a \code{default} case.
+In the example above, the \code{break} statement is redundant, but it prevents a fall-through error if more cases are added at a later time.
+
+\subsection{Class declarations}
+Classes must be declared in the following format:
+\begin{lstlisting}
+class ClassName
+{
+	public:
+		// public member function declarations
+
+	private:
+		// private member variables and functions
+};
+\end{lstlisting}
+
+\section*{Example}
+\begin{lstlisting}[caption=temperature.h]
+#ifndef TEMPERATURE_H
+#define TEMPERATURE_H
+
+/*
+ * File: temperature.h
+ * Author: Nathan Jarus, CS 1570 A
+ * This file contains a class for converting
+ * temperature units.
+ */
+
+/*
+ * Class: Temperature
+ * This class stores the value of one temperature.
+ * It can convert temperatures between degrees Fahrenheit,
+ * Celsius, and Kelvin.
+ */
+
+class Temperature
+{
+	public:
+		/*
+		 * Function: setCelsius
+		 * Sets the temperature using degrees Celsius
+		 * Pre: the parameter must be in degrees Celsius
+		 * Post: the parameter is converted to degrees Kelvin
+		 *   and stored in m_temperature
+		 * Param temp: the temperature to store, in degrees
+		 *   Celsius
+		 */
+		void setCelsius(double temp);
+
+		/*
+		 * Function: setFahrenheit
+		 * Sets the temperature using degrees Fahrenheit
+		 * Pre: the parameter must be in degrees Fahrenheit
+		 * Post: the parameter is converted to degrees Kelvin
+		 *   and stored in m_temperature
+		 * Param temp: the temperature to store, in degrees
+		 *   Fahrenheit
+		 */
+		void setFahrenheit(double temp);
+
+		/*
+		 * Function: setKelvin
+		 * Sets the temperature using degrees Kelvin
+		 * Pre: the parameter must be in degrees Kelvin
+		 * Post: the parameter is converted to degrees Kelvin
+		 *   and stored in m_temperature
+		 * Param temp: the temperature to store, in degrees
+		 *   Kelvin
+		 */
+		void setKelvin(double temp);
+
+		/*
+		 * Function: getCelsius
+		 * Retrieves the temperature in degrees Celsius
+		 * Pre: none
+		 * Post: The value of m_temperature is converted to
+		 *   degrees Celsius
+		 * Return: The value of m_temperature in degrees
+		 *   Celsius
+		 */
+		double getCelsius();
+
+		/*
+		 * Function: getFahrenheit
+		 * Retrieves the temperature in degrees Fahrenheit
+		 * Pre: none
+		 * Post: The value of m_temperature is converted to
+		 *   degrees Fahrenheit
+		 * Return: The value of m_temperature in degrees
+		 *   Fahrenheit
+		 */
+		double getFahrenheit();
+
+		/*
+		 * Function: getKelvin
+		 * Retrieves the temperature in degrees Kelvin
+		 * Pre: none
+		 * Post: The value of m_temperature is converted to
+		 *   degrees Kelvin
+		 * Return: The value of m_temperature in degrees
+		 *   Kelvin
+		 */
+		double getKelvin();
+
+	private:
+		double m_temperature; // Stores a temperature in
+		                      // degrees Kelvin
+};
+
+#endif
+\end{lstlisting}
+
+\begin{lstlisting}[caption=main.cpp]
+/*
+ * File: main.cpp
+ * Author: Nathan Jarus, CS 1570 A
+ * Demonstrates the use of the Temperature class
+ */
+
+#include "temperature.h"
+
+using namespace std;
+
+int main()
+{
+	Temperature t;
+
+	t.setCelsius(52.3);
+	cout << t.getKelvin() << endl;
+
+	return 0;
+}
+\end{lstlisting}
+\end{document}
