@@ -16,6 +16,12 @@ a:hover {
 a:active {
 	color: #DD0000;
 }
+hr {
+	height: 1px;
+	border: 0;
+	color:black;
+	background-color:black;
+}
 h3 { 
 	display: inline;
 }
