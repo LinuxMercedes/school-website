@@ -115,8 +115,8 @@ While \code{\#pragma once} is not standard, it is supported by every commonly-us
 The very top of every file must have a comment block like the following:
 \begin{lstlisting}
 /*
- * File: filename.cpp
  * Author: Your name and your class and section number
+ * File: filename.cpp      Date: tomorrow
  * A brief description of the file's contents
  */
 \end{lstlisting}
@@ -125,14 +125,14 @@ The very top of every file must have a comment block like the following:
 Before each class declaration (i.e.\ in the header file for each class), the following comment block must appear:
 \begin{lstlisting}
 /*
- * Class: class_name
+ * Class: Class_name
  * A brief description of what the class does
  */
 \end{lstlisting}
 
 \subsection{Functions}
 Both regular and member functions must be documented at the point of declaration(i.e.\ in a header file).
-When defining a class, the comment blocks will appear inside the class definition immediately above the member function they describe.
+When defining a class, the comment blocks can appear either between the class comment block and the class definition or inside the class definition immediately above the member function they describe.
 
 \begin{lstlisting}
 /*
@@ -188,6 +188,9 @@ Do not use tabs to indent; use spaces instead.
 You may indent two or four spaces for each level, but you must be consistent across all the files in your program.
 Most editors can be configured to automaically indent your code as you type.
 
+If you have to indent your code more than four levels deep, you should stop and think about what you're doing.
+Down that path lies madness.
+
 \subsection{Simple statements}
 Each line should contain no more than one statement.
 For instance, this is not acceptable:
@@ -213,22 +216,6 @@ The following sections contain many examples of this formatting.
 
 \subsection{\code{return} statements}
 Every function, including \code{void} functions, must end with a \code{return} statement.
-
-Multiple return statements are allowed when sanity-checking arguments.
-Otherwise, you are strongly discouraged from using multiple return statements as it makes following the flow of the function difficult.
-For example,
-\begin{lstlisting}
-int divide(int num, int denom)
-{
-	if(denom == 0)
-	{
-		cerr << "Division by zero!";
-		return 0;
-	}
-
-	return num/denom;
-}
-\end{lstlisting}
 
 Return statements should use parentheses only when needed to make the return value clearer.
 \begin{lstlisting}
@@ -364,8 +351,8 @@ class ClassName
 #define TEMPERATURE_H
 
 /*
- * File: temperature.h
  * Author: Nathan Jarus, CS 1570 A
+ * File: temperature.h    Date: 2016-08-21
  * This file contains a class for converting
  * temperature units.
  */
@@ -377,73 +364,75 @@ class ClassName
  * Celsius, and Kelvin.
  */
 
+/*
+ * Function: setCelsius
+ * Sets the temperature using degrees Celsius
+ * Pre: the parameter must be in degrees Celsius
+ * Post: the parameter is converted to degrees Kelvin
+ *   and stored in m_temperature
+ * Param temp: the temperature to store, in degrees
+ *   Celsius
+ */
+
+/*
+ * Function: setFahrenheit
+ * Sets the temperature using degrees Fahrenheit
+ * Pre: the parameter must be in degrees Fahrenheit
+ * Post: the parameter is converted to degrees Kelvin
+ *   and stored in m_temperature
+ * Param temp: the temperature to store, in degrees
+ *   Fahrenheit
+ */
+
+/*
+ * Function: setKelvin
+ * Sets the temperature using degrees Kelvin
+ * Pre: the parameter must be in degrees Kelvin
+ * Post: the parameter is converted to degrees Kelvin
+ *   and stored in m_temperature
+ * Param temp: the temperature to store, in degrees
+ *   Kelvin
+ */
+
+/*
+ * Function: getCelsius
+ * Retrieves the temperature in degrees Celsius
+ * Pre: none
+ * Post: The value of m_temperature is converted to
+ *   degrees Celsius
+ * Return: The value of m_temperature in degrees
+ *   Celsius
+ */
+
+/*
+ * Function: getFahrenheit
+ * Retrieves the temperature in degrees Fahrenheit
+ * Pre: none
+ * Post: The value of m_temperature is converted to
+ *   degrees Fahrenheit
+ * Return: The value of m_temperature in degrees
+ *   Fahrenheit
+ */
+
+/*
+ * Function: getKelvin
+ * Retrieves the temperature in degrees Kelvin
+ * Pre: none
+ * Post: The value of m_temperature is converted to
+ *   degrees Kelvin
+ * Return: The value of m_temperature in degrees
+ *   Kelvin
+ */
+
 class Temperature
 {
 	public:
-		/*
-		 * Function: setCelsius
-		 * Sets the temperature using degrees Celsius
-		 * Pre: the parameter must be in degrees Celsius
-		 * Post: the parameter is converted to degrees Kelvin
-		 *   and stored in m_temperature
-		 * Param temp: the temperature to store, in degrees
-		 *   Celsius
-		 */
 		void setCelsius(double temp);
-
-		/*
-		 * Function: setFahrenheit
-		 * Sets the temperature using degrees Fahrenheit
-		 * Pre: the parameter must be in degrees Fahrenheit
-		 * Post: the parameter is converted to degrees Kelvin
-		 *   and stored in m_temperature
-		 * Param temp: the temperature to store, in degrees
-		 *   Fahrenheit
-		 */
 		void setFahrenheit(double temp);
-
-		/*
-		 * Function: setKelvin
-		 * Sets the temperature using degrees Kelvin
-		 * Pre: the parameter must be in degrees Kelvin
-		 * Post: the parameter is converted to degrees Kelvin
-		 *   and stored in m_temperature
-		 * Param temp: the temperature to store, in degrees
-		 *   Kelvin
-		 */
 		void setKelvin(double temp);
 
-		/*
-		 * Function: getCelsius
-		 * Retrieves the temperature in degrees Celsius
-		 * Pre: none
-		 * Post: The value of m_temperature is converted to
-		 *   degrees Celsius
-		 * Return: The value of m_temperature in degrees
-		 *   Celsius
-		 */
 		double getCelsius();
-
-		/*
-		 * Function: getFahrenheit
-		 * Retrieves the temperature in degrees Fahrenheit
-		 * Pre: none
-		 * Post: The value of m_temperature is converted to
-		 *   degrees Fahrenheit
-		 * Return: The value of m_temperature in degrees
-		 *   Fahrenheit
-		 */
 		double getFahrenheit();
-
-		/*
-		 * Function: getKelvin
-		 * Retrieves the temperature in degrees Kelvin
-		 * Pre: none
-		 * Post: The value of m_temperature is converted to
-		 *   degrees Kelvin
-		 * Return: The value of m_temperature in degrees
-		 *   Kelvin
-		 */
 		double getKelvin();
 
 	private:
@@ -456,8 +445,8 @@ class Temperature
 
 \begin{lstlisting}[caption=main.cpp]
 /*
- * File: main.cpp
  * Author: Nathan Jarus, CS 1570 A
+ * File: main.cpp      Date: 2016-08-21
  * Demonstrates the use of the Temperature class
  */
 
