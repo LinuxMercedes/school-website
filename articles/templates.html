@@ -6,13 +6,24 @@
 <!-- Styling for vim syntax hilighting -->
 <style type="text/css">
 <!--
-pre { white-space: pre-wrap; font-family: monospace; color: #000000; background-color: #DCDCDC; float:left; }
-p {clear:both;}
+/*pre { white-space: pre-wrap; font-family: monospace; color: #000000; background-color: #DCDCDC; float:left; margin:5px; padding:2px;}
 .lnr { color: #804000; }
 .Constant { color: #c00000; }
 .Statement { color: #804000; }
 .Type { color: #008000; }
+*/
+pre { white-space: pre-wrap; font-family: monospace; color: #202020; background-color: #eeeeee; }
+.Type { color: #af5faf; }
+.lnr { color: #808080; }
+.Comment { color: #505050; }
+.Constant { color: #0087ff; }
+.String { color: #005fd7; }
+.PreProc { color: #00d75f; }
+.Statement { color: #875faf; }
+p { clear:both; }
+pre { float:left; margin:5px; padding:2px; }
 h3 { display:block; }
+code { color: #202020; background-color:#eeeeee; }
 -->
 </style>
 
@@ -21,18 +32,21 @@ h3 { display:block; }
 <div><a href="..">Home</a> <a href="index.html">Articles</a><hr></div>
 <h2>C++ Template Classes and Friend Function Details</h2>
 <h3>Introduction</h3>
-<p>In C++, there are a few different ways to set up template classes with friend functions.
+<p>When writing C++, there are a couple common situations where you may want to create a friend function, such as implementing <code>operator&lt;&lt;</code>.
+These are straightforward to write for non-template classes, but templates throw a real wrench in the works here.
+In C++, there are a few different ways to set up template classes with friend functions.
 Each behaves in a subtly different way, which causes all sorts of confusion when trying to finish your homework the night before it's due.
 We will examine the possible approaches to this, but first...
 </p>
 
 <h3>Some terminology</h3>
-<p><b>Template instantiation</b>: A specific instance of a templated item; for example, if we have a templated class A, A&lt;int&gt; is a specific
-instantiation of A. </p>
-<p><b>Free function</b>: A function that is not a member of a class. We will examine these in the context of friend functions in this article.</p>
+<ul>
+	<li><b>Template instantiation</b>: A specific instance of a templated item; for example, if we have a templated class <code>A</code>, <code>A&lt;int&gt;</code> is a specific instantiation of <code>A</code>. </li>
+	<li><b>Non-member function</b>: A function that is not a member of a class. We will examine these in the context of friend functions in this article.</li>
+</ul>
 
 <h3>Approach #1</h3>
-<pre>
+<p> <pre>
 <span class="lnr"> 1 </span><span class="Type">template</span>&lt;<span class="Type">class</span> T&gt;
 <span class="lnr"> 2 </span><span class="Type">class</span> A
 <span class="lnr"> 3 </span>{
@@ -51,19 +65,37 @@ instantiation of A. </p>
 <span class="lnr">16 </span>{
 <span class="lnr">17 </span>  <span class="Statement">return</span> a;
 <span class="lnr">18 </span>}
-<span class="lnr">19 </span>
-</pre>
+</pre> </p>
 
-<p>This approach is the most permissive approach to declaring a templated friend function of a templated class.
-This will work for all cases where you want to explicitly pass an instance of A to foo(). 
+<p>
+This approach is the most permissive approach to declaring a templated friend function of a templated class.
+This will work for all cases where you want to explicitly pass an instance of class <code>A</code> to <code>foo()</code>.
 </p>
 
-<p>However, there is one unapparent side effect of this approach: All template instantiations of A are friends with all template instantiations of foo(), i.e.
-A&lt;int&gt; is friends with foo&lt;int&gt; but also foo&lt;double&gt;. 
-Since this can pose some security issues by allowing people to make functions that are friends with all your template instances, we want a different approach that's a bit more picky about its friends, which brings us to
+<p>However, there is one unapparent side effect of this approach: All template instantiations of <code>A</code> are friends with all template instantiations of <code>foo()</code>.
+So, for example, <code>A&lt;int&gt;</code> is friends with <code>foo&lt;int&gt;</code> but also <code>foo&lt;double&gt;</code>.
+To see why this is a Bad Thing, consider the following perfectly valid C++:
 </p>
+
+<p> <pre>
+<span class="lnr">19 </span>A&lt;<span class="Type">double</span>&gt; secret_pie(<span class="Constant">3</span><span class="Constant">.14</span>);
+<span class="lnr">20 </span>
+<span class="lnr">21 </span><span class="Type">struct</span> dummy {};
+<span class="lnr">22 </span><span class="Type">template</span>&lt;&gt;
+<span class="lnr">23 </span>A&lt;dummy&gt; foo&lt;dummy&gt;(A&lt;dummy&gt;&amp; d)
+<span class="lnr">24 </span>{
+<span class="lnr">25 </span>  cout &lt;&lt; <span class="String">&quot;Hacked! &quot;</span> &lt;&lt; secret_pie.m_a &lt;&lt; endl;
+<span class="lnr">26 </span>  <span class="Statement">return</span> d;
+<span class="lnr">27 </span>}
+</pre> </p>
+
+<p>
+In an ideal world, line 25 should not work, since it is in a function that by all rights should know nothing about <code>A&lt;double&gt;</code>!
+To prevent this potential security flaw, we must take a different approach to generate more antisocial friend functions.
+</p>
+
 <h3>Approach #2</h3>
-<pre>
+<p> <pre>
 <span class="lnr"> 1 </span><span class="Type">template</span>&lt;<span class="Type">class</span> T&gt;
 <span class="lnr"> 2 </span><span class="Type">class</span> A;
 <span class="lnr"> 3 </span>
@@ -87,26 +119,27 @@ Since this can pose some security issues by allowing people to make functions th
 <span class="lnr">21 </span>{
 <span class="lnr">22 </span>  <span class="Statement">return</span> a;
 <span class="lnr">23 </span>}
-<span class="lnr">24 </span>
-</pre>
+</pre> </p>
 
-<p> This approach is a bit more ugly, but it fixes the security issue with approach #1. 
-Here, foo() is declared as a template function using a declared (but not yet defined) templated class A. 
-A then later defines the template instantiation of foo() matching the template instantiation of A as a friend. 
-(In case you're wondering why on line 13 A is used with no &lt;T&gt; after it: inside class definitions, C++
- assumes that any reference to that class is templated, so adding the &lt;T&gt; is redundant.) </p>
-<p>This may seem like a minor difference from approach #1, but in this case 
-A&lt;int&gt; is friends with foo&lt;int&gt;, but foo&lt;double&gt; is not a friend of A&lt;int&gt; since foo&lt;double&gt; has a
-different template instantiation. 
-</p>
+<p> This approach is a bit more ugly, but it fixes the security issue with approach #1.
+Here, <code>foo()</code> is declared as a template function using a declared (but not yet defined) templated class <code>A</code>.
+Then, when we define <code>A</code>, we make each template instantiation of <code>A</code> friends with the corresponding template instantiation of <code>foo()</code>.
+(In case you're wondering why on line 13 A is used with no <code>&lt;T&gt;</code> after it: inside class definitions, C++
+assumes that any reference to that class is templated, so adding the <code>&lt;T&gt;</code> is redundant.) </p>
+
+<p>This may seem like a minor difference from approach #1, but in this case
+<code>A&lt;int&gt;</code> is friends with <code>foo&lt;int&gt;</code>, but <code>foo&lt;double&gt;</code> is not a friend of <code>A&lt;int&gt;</code> since the type in their template parameters do not match.</p>
 
 <p>In general, this is how template friend functions are done in best practices.
-They are explicit in the type of object they will take as parameters and do not allow different template instantiations to be friends.
-However, in certain edge cases, such as numeric type objects, these friend functions have an undesirable side effect: 
+They are explicit in the type of objects they will take as parameters and do not allow different template instantiations to be friends.
+</p>
+
+<p>
+However, in certain edge cases, such as numeric type objects, these friend functions have an undesirable side effect:
 since they are template functions, the parameters passed to them must be explicitly associated with the expected parameter types
 for template argument deduction to succeed. To illustrate, </p>
 
-<pre>
+<p><pre>
 <span class="lnr"> 1 </span><span class="Type">template</span>&lt;<span class="Type">class</span> T&gt;
 <span class="lnr"> 2 </span><span class="Type">class</span> A;
 <span class="lnr"> 3 </span>
@@ -141,20 +174,19 @@ for template argument deduction to succeed. To illustrate, </p>
 <span class="lnr">32 </span>
 <span class="lnr">33 </span>  <span class="Statement">return</span> <span class="Constant">0</span>;
 <span class="lnr">34 </span>}
-<span class="lnr">35 </span>
-</pre>
+</pre></p>
 
-<p>On line 31, despite there being an implicit conversion from int to A&lt;int&gt;, that conversion is not made. 
-This is because C++ never considers implicit conversions for template parameter deduction on free template functions. 
-For the most part, this is not a problem because it prevents certain amounts of ambiguity when dealing with calling template functions, 
+<p>On line 31, despite there being an implicit conversion from <code>int</code> to <code>A&lt;int&gt;</code>, that conversion is not made.
+This is because C++ never considers implicit conversions for template parameter deduction on non-member template functions.
+For the most part, this is not a problem because it prevents certain amounts of ambiguity when dealing with calling template functions,
 but in the case where we are working with numeric type classes, we do want the implicit conversion to occur.
 </p>
 
 <h3>Approach #3</h3>
 <p>As we saw in approach #2, C++ won't implicitly convert types for template function parameters, even if such a conversion exists.
-But in the case where we are working with numeric types, we want that conversion to occur. 
-So, how can we achieve this? Well, C++ will perform implicit type conversion on non-templated free functions. 
-What if we were to create some non-template friend function that was automatically created for each template instantiation of 
+But in the case where we are working with numeric types, we want that conversion to occur.
+So, how can we achieve this? Well, C++ will perform implicit type conversion on non-templated non-member functions.
+What if we were to create some non-template friend function that was automatically created for each template instantiation of
 some class? As it turns out, that is possible:</p>
 <pre>
 <span class="lnr"> 1 </span><span class="Type">template</span>&lt;<span class="Type">class</span> T&gt;
@@ -182,14 +214,15 @@ some class? As it turns out, that is possible:</p>
 <span class="lnr">23 </span>  i + a;    <span class="Comment">// Also succeeds</span>
 <span class="lnr">24 </span>  <span class="Statement">return</span> <span class="Constant">0</span>;
 <span class="lnr">25 </span>}
-<span class="lnr">26 </span>
 </pre>
 
-<p>Here, operator+ is a friend function, but is not templated. Instead, it is a function that is automatically created
-for each template instantiation of A when that template is instantiated. The generic definition must be inlined in the
-class definition because operator+ doesn't exist outside the class definition of A until A is instantiated, which happens
-during the compilation process. It is possible to write specific definitions of operator+ outside of A, but no generic
-definition can be written because operator+ is not a template function: </p>
+<p>Here, <code>operator+</code> is a friend function, but is not templated. Instead, it is a function that is automatically created
+for each template instantiation of <code>A</code> when that template is instantiated. The generic definition must be inlined in the
+class definition because <code>operator+</code> doesn't exist outside the class definition of <code>A</code> until a template instantiation
+of <code>A</code> is generated, which happens during the compilation process.</p>
+
+<p> As an aside, it is possible to write specific definitions of <code>operator+</code>
+outside of A, but no generic definition can be written because operator+ is not a template function: </p>
 <pre>
 <span class="lnr"> 1 </span><span class="Type">template</span>&lt;<span class="Type">class</span> T&gt;
 <span class="lnr"> 2 </span><span class="Type">class</span> A
@@ -218,15 +251,17 @@ definition can be written because operator+ is not a template function: </p>
 <span class="lnr">25 </span>  i + a;    <span class="Comment">// Also succeeds</span>
 <span class="lnr">26 </span>  <span class="Statement">return</span> <span class="Constant">0</span>;
 <span class="lnr">27 </span>}
-<span class="lnr">28 </span>
 </pre>
 
-<p>However, this code won't compile without warnings in gcc, and is uninteresting anyway because we don't want to write
-specific implementations of operator+ for each template instantiation of A. The warning itself indicates that 
-this is possible, but not usually what you want to do.</p>
-<p>Now, you may be wondering why I switched my example function defnition. As it turns out, declaring non-template
-friend functions like this puts them in a VERY strange place as far as being able to refer to them goes. 
-C++ has a feature called ADL, or Argument Dependent Lookup, that can search through functions that aren't in the current
+<p>However, this code won't compile without warnings in GCC, and is uninteresting anyway because we don't want to write
+specific implementations of <code>operator+</code> for each template instantiation of <code>A</code> (otherwise, why bother
+with templates to begin with?). The warning itself indicates that this is possible, but not usually what you want to do.</p>
+
+<p>Now, you may be wondering why I switched my example function defnition. As it turns out, this sort of non-template
+friend function is unusual since the function is neither in the global scope nor a member of class <code>A</code>.
+This means that our function doesn't live in the "standard" places you'd expect it to; neither <code>::operator+</code>
+nor <code>A&lt;int&gt;::operator+</code> exist.
+Fortunately, C++ has a feature called ADL, or Argument Dependent Lookup, that can search through functions that aren't in the current
 scope, but exist in a class or namespace that is suggested by the type of the arguments handed to the function call:</p>
 
 <pre>
@@ -241,7 +276,7 @@ scope, but exist in a class or namespace that is suggested by the type of the ar
 <span class="lnr"> 9 </span>      <span class="Statement">return</span> lhs.m_a + rhs.m_a;
 <span class="lnr">10 </span>    }
 <span class="lnr">11 </span>
-<span class="lnr">12 </span>    <span class="Statement">friend</span> A foo(A&amp; a)
+<span class="lnr">12 </span>    <span class="Statement">friend</span> A foo(<span class="Type">const</span> A&amp; a)
 <span class="lnr">13 </span>    {
 <span class="lnr">14 </span>      <span class="Statement">return</span> a;
 <span class="lnr">15 </span>    }
@@ -260,24 +295,52 @@ scope, but exist in a class or namespace that is suggested by the type of the ar
 <span class="lnr">28 </span>  i + a;    <span class="Comment">// Also succeeds</span>
 <span class="lnr">29 </span>
 <span class="lnr">30 </span>  foo(a);   <span class="Comment">// Succeeds</span>
-<span class="lnr">31 </span>  foo(i);   <span class="Comment">// Fails</span>
+<span class="lnr">31 </span>  foo(i);   <span class="Comment">// Fails: foo not declared in this scope</span>
 <span class="lnr">32 </span>  foo(A&lt;<span class="Type">int</span>&gt;(i)); <span class="Comment">// Succeeds</span>
 <span class="lnr">33 </span>  <span class="Statement">return</span> <span class="Constant">0</span>;
 <span class="lnr">34 </span>}
-<span class="lnr">35 </span>
 </pre>
 
-<p>Here, line 28 succeeds because of ADL: even though foo() is not in the current scope, C++ can see that the second argument to operator+ is A&lt;int&gt;
-and therefore will attempt to implicitly convert i to A&lt;int&gt; because foo() is not a template function and thus follows standard implicit conversion
-rules for non-template free functions. Since C++ does have a way to convert int to A&lt;int&gt;, the call succeeds.</p>
-<p>However, the call on line 31 fails because foo() is not in the current scope, and no parameter in foo() hints that C++ needs to use ADL to consider functions
-not in the current scope.</p>
-<p>Line 32 succeeds because the parameter to foo() is explicitly of type A&lt;int&gt;, and thus C++ uses ADL to look up foo(). </p>
+<p>Here, line 28 succeeds because of ADL: even though <code>operator+</code> is not in the current scope, C++ can see that the
+second argument to <code>operator+</code> is of type <code>A&lt;int&gt;</code> and therefore will attempt to implicitly convert
+<code>i</code> to <code>A&lt;int&gt;</code> because <code>operator+</code> is not a template function and thus follows standard implicit conversion
+rules for non-template non-member functions. Since C++ does have a way to convert an <code>int</code> to a <code>A&lt;int&gt;</code>, the call succeeds.</p>
+
+<p>However, the call on line 31 fails because <code>foo()</code> is not in the current scope, and no parameter passed to <code>foo()</code>
+hints that C++ needs to use ADL to consider functions not in the current scope.</p>
+
+<p>Line 32 succeeds because the parameter to <code>foo()</code> is explicitly of type <code>A&lt;int&gt;</code>, and thus C++ uses ADL to look up <code>foo()</code>. </p>
+
 <p>This issue with ADL not always looking up a function when it exists is reason to not use this approach with most classes and instead explicitly
-convert the parameters to the correct types for foo(). And, if you're already explicitly converting types, you may as well use approach #2 and 
-lose all the complexity of approach #3.</p>
+convert arguments to the correct types when calling a templated friend function. And, if you're already explicitly converting types, you may as
+well use approach #2 and lose all the complexity of approach #3.</p>
+
 <p>But, in the case where you require implicit type conversions on friend functions of template classes and can guarantee that ADL will succeed
-in your function calls, approach #3 will work, but be aware that it can break easily if you rely on too much implicit type conversion.</p>
+in your function calls, approach #3 will work, and in the worst case it is no more difficult to use than approach #2.</p>
+
+<h3>Conclusion</h3>
+<p>
+C++ has three approaches for implementing friend functions of template classes.
+The first approach, making each template instantiation of a function friends with each template instantiation of a class, has some unfortunate
+consequences for object-oriented encapsulation best practices.
+The second approach explicitly creates both a template class and a template function and makes each instantiation of the class friends with the
+corresponding instantiation of the function. This approach is generally what people want when they think of making a template function friends
+with a template class. Unfortunately, however, template functions do not perform implicit conversions on parameters passed to them.
+The third approach solves this problem by relying on C++'s template instantiation mechanism to generate a non-template friend function associated
+with each instantiation of a template class. However, calling this function depends on ADL to find that function, so compiler errors may be odd
+("function not declared in this scope" rather than "cannot convert argument").
+</p>
+<p>
+Of course, you should ask yourself whether you need a friend function to begin with! For example, if you implement <code>operator+=</code> as
+a member function, you can write a templated <code>operator+</code> function that just calls your public <code>operator+=</code> function and
+thus does not need to be a friend function in the first place. (However, be aware that this will not perform implicit conversions; you must use
+approach #3 if you want those.)
+</p>
+<p>
+Overall, if you need implicit conversions from other types to instances of a template class, you should take approach #3.
+Otherwise, consider whether you can implement your non-member function by calling public member functions of the template class; if you can,
+you don't need a friend function at all. If you cannot, then take approach #2.
+</p>
 
 <h3>Sources and Further Reading</h3>
 <ul>
