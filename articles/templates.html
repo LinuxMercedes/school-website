@@ -91,7 +91,7 @@ To see why this is a Bad Thing, consider the following perfectly valid C++:
 
 <p>
 In an ideal world, line 25 should not work, since it is in a function that by all rights should know nothing about <code>A&lt;double&gt;</code>!
-To prevent this potential security flaw, we must take a different approach to generate more antisocial friend functions.
+To prevent this potential programmer error, we must take a different approach to generate more antisocial friend functions.
 </p>
 
 <h3>Approach #2</h3>
@@ -121,7 +121,7 @@ To prevent this potential security flaw, we must take a different approach to ge
 <span class="lnr">23 </span>}
 </pre> </p>
 
-<p> This approach is a bit more ugly, but it fixes the security issue with approach #1.
+<p> This approach is a bit more ugly, but it fixes the issue with approach #1.
 Here, <code>foo()</code> is declared as a template function using a declared (but not yet defined) templated class <code>A</code>.
 Then, when we define <code>A</code>, we make each template instantiation of <code>A</code> friends with the corresponding template instantiation of <code>foo()</code>.
 (In case you're wondering why on line 13 A is used with no <code>&lt;T&gt;</code> after it: inside class definitions, C++
