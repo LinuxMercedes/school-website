@@ -22,7 +22,7 @@ h3 { display:block; }
 code { color: #202020; background-color:#eeeeee; }
 -->
 </style>
-<!-- TODO: asm syntax highlighting, proofreading, better title -->
+<!-- TODO: proofreading, better title -->
 </head>
 <body>
 <div><a href="..">Home</a> <a href="index.html">Articles</a><hr></div>
@@ -278,7 +278,7 @@ We'll examine the first two; the destructor is relatively uninteresting.
 <h4>Function:</h4>
 <h5>Constructor:</h5>
 <p><pre>
-<span id="L215" class="LineNr"> 215 </span>  y = function_caller(function, 5);
+<span id="L215" class="LineNr"> 215 </span><span class="CPP">  y = function_caller(function, 5);</span>
 <span id="L216" class="LineNr"> 216 </span>  400839: 48 8d 45 80           lea    rax,[rbp-0x80]
 <span id="L217" class="LineNr"> 217 </span>  40083d: be 76 07 40 00        mov    esi,0x400776
 <span id="L218" class="LineNr"> 218 </span>  400842: 48 89 c7              mov    rdi,rax
@@ -293,16 +293,16 @@ function pointer).
 </p>
 
 <p><pre>
-<span id="L907" class="LineNr"> 907 </span>0000000000400e12 &lt;std::function&lt;int (int)&gt;::function&lt;int (*)(int), void, void&gt;(int (*)(int))&gt;:
-<span id="L908" class="LineNr"> 908 </span>      function&lt;_Res(_ArgTypes...)&gt;::
+<span id="L907" class="LineNr"> 907 </span><span class="Header">0000000000400e12 &lt;std::function&lt;int (int)&gt;::function&lt;int (*)(int), void, void&gt;(int (*)(int))&gt;:</span>
+<span id="L908" class="LineNr"> 908 </span><span class="CPP">      function&lt;_Res(_ArgTypes...)&gt;::</span>
 <span id="L909" class="LineNr"> 909 </span>  400e12: 55                    push   rbp
 <span id="L910" class="LineNr"> 910 </span>  400e13: 48 89 e5              mov    rbp,rsp
 <span id="L911" class="LineNr"> 911 </span>  400e16: 53                    push   rbx
 <span id="L912" class="LineNr"> 912 </span>  400e17: 48 83 ec 18           sub    rsp,0x18
 <span id="L913" class="LineNr"> 913 </span>  400e1b: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
 <span id="L914" class="LineNr"> 914 </span>  400e1f: 48 89 75 e0           mov    QWORD PTR [rbp-0x20],rsi
- ...
-<span id="L928" class="LineNr"> 928 </span>      _My_handler::_M_init_functor(_M_functor, std::move(__f));
+<span class="CPP"> ...</span>
+<span id="L928" class="LineNr"> 928 </span><span class="CPP">      _My_handler::_M_init_functor(_M_functor, std::move(__f));</span>
 <span id="L929" class="LineNr"> 929 </span>  400e4b: 48 8d 45 e0           lea    rax,[rbp-0x20]
 <span id="L930" class="LineNr"> 930 </span>  400e4f: 48 89 c7              mov    rdi,rax
 <span class="String">####                                        rdi -&gt; rax</span>
@@ -334,15 +334,15 @@ Let's see what happens in there:
 </p>
 
 <p><pre>
-<span id="L1290" class="LineNr">1290 </span>00000000004011aa &lt;std::_Function_base::_Base_manager&lt;int (*)(int)&gt;::_M_init_functor(std::_Any_data&amp;, int (*&amp;&amp;)(int), std::integral_constant&lt;bool, true&gt;)&gt;:
-<span id="L1291" class="LineNr">1291 </span>  _M_init_functor(_Any_data&amp; __functor, _Functor&amp;&amp; __f, true_type)
+<span id="L1290" class="LineNr">1290 </span><span class="Header">00000000004011aa &lt;std::_Function_base::_Base_manager&lt;int (*)(int)&gt;::_M_init_functor(std::_Any_data&amp;, int (*&amp;&amp;)(int), std::integral_constant&lt;bool, true&gt;)&gt;:</span>
+<span id="L1291" class="LineNr">1291 </span><span class="CPP">  _M_init_functor(_Any_data&amp; __functor, _Functor&amp;&amp; __f, true_type)</span>
 <span id="L1292" class="LineNr">1292 </span>  4011aa: 55                    push   rbp
 <span id="L1293" class="LineNr">1293 </span>  4011ab: 48 89 e5              mov    rbp,rsp
 <span id="L1294" class="LineNr">1294 </span>  4011ae: 53                    push   rbx
 <span id="L1295" class="LineNr">1295 </span>  4011af: 48 83 ec 18           sub    rsp,0x18
 <span id="L1296" class="LineNr">1296 </span>  4011b3: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
 <span id="L1297" class="LineNr">1297 </span>  4011b7: 48 89 75 e0           mov    QWORD PTR [rbp-0x20],rsi
-<span id="L1298" class="LineNr">1298 </span>  { new (__functor._M_access()) _Functor(std::move(__f)); }
+<span id="L1298" class="LineNr">1298 </span><span class="CPP">  { new (__functor._M_access()) _Functor(std::move(__f)); }</span>
 <span id="L1299" class="LineNr">1299 </span>  4011bb: 48 8b 45 e0           mov    rax,QWORD PTR [rbp-0x20]
 <span id="L1300" class="LineNr">1300 </span>  4011bf: 48 89 c7              mov    rdi,rax
 <span id="L1301" class="LineNr">1301 </span>  4011c2: e8 3c fc ff ff        call   400e03 &lt;std::remove_reference&lt;int (*&amp;)(int)&gt;::type&amp;&amp; std::move&lt;int (*&amp;)(int)&gt;(int (*&amp;)(int))&gt;
@@ -381,15 +381,15 @@ The constructor for <code>std::function</code> does one other important thing: i
 </p>
 
 <p><pre>
-<span id="L937" class="LineNr"> 937 </span>      _M_invoker = &amp;_My_handler::_M_invoke;
+<span id="L937" class="LineNr"> 937 </span><span class="CPP">      _M_invoker = &amp;_My_handler::_M_invoke;</span>
 <span id="L938" class="LineNr"> 938 </span>  400e69: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
 <span id="L939" class="LineNr"> 939 </span>  400e6d: 48 c7 40 18 97 0f 40  mov    QWORD PTR [rax+0x18],0x400f97
 <span id="L940" class="LineNr"> 940 </span>  400e74: 00
-<span id="L941" class="LineNr"> 941 </span>      _M_manager = &amp;_My_handler::_M_manager;
+<span id="L941" class="LineNr"> 941 </span><span class="CPP">      _M_manager = &amp;_My_handler::_M_manager;</span>
 <span id="L942" class="LineNr"> 942 </span>  400e75: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
 <span id="L943" class="LineNr"> 943 </span>  400e79: 48 c7 40 10 d0 0f 40  mov    QWORD PTR [rax+0x10],0x400fd0
 <span id="L944" class="LineNr"> 944 </span>  400e80: 00
-<span id="L945" class="LineNr"> 945 </span>      }
+<span id="L945" class="LineNr"> 945 </span><span class="CPP">      }</span>
 </pre></p>
 
 <p>The vtable entries are created by storing function addresses in the object we're constructing.
@@ -410,34 +410,34 @@ Back in <code>main()</code>, we see that a pointer to the <code>std::function</c
 
 <p><code>function_caller</code> just calls <code>std::function::operator()</code> with the same arguments in the same registers:</p>
 <p><pre>
-<span id="L138" class="LineNr"> 138 </span>0000000000400785 &lt;function_caller(std::function&lt;int (int)&gt;, int)&gt;:
-<span id="L144" class="LineNr"> 144 </span>int function_caller(std::function&lt;int(int)&gt; f, int arg) {
+<span id="L138" class="LineNr"> 138 </span><span class="Header">0000000000400785 &lt;function_caller(std::function&lt;int (int)&gt;, int)&gt;:</span>
+<span id="L144" class="LineNr"> 144 </span><span class="CPP">int function_caller(std::function&lt;int(int)&gt; f, int arg) {</span>
 <span id="L145" class="LineNr"> 145 </span>  400785: 55                    push   rbp
 <span id="L146" class="LineNr"> 146 </span>  400786: 48 89 e5              mov    rbp,rsp
 <span id="L147" class="LineNr"> 147 </span>  400789: 48 83 ec 10           sub    rsp,0x10
 <span id="L148" class="LineNr"> 148 </span>  40078d: 48 89 7d f8           mov    QWORD PTR [rbp-0x8],rdi
 <span id="L149" class="LineNr"> 149 </span>  400791: 89 75 f4              mov    DWORD PTR [rbp-0xc],esi
-<span id="L150" class="LineNr"> 150 </span>  return f(arg);
+<span id="L150" class="LineNr"> 150 </span><span class="CPP">  return f(arg);</span>
 <span id="L151" class="LineNr"> 151 </span>  400794: 8b 55 f4              mov    edx,DWORD PTR [rbp-0xc]
 <span id="L152" class="LineNr"> 152 </span>  400797: 48 8b 45 f8           mov    rax,QWORD PTR [rbp-0x8]
 <span id="L153" class="LineNr"> 153 </span>  40079b: 89 d6                 mov    esi,edx
 <span id="L154" class="LineNr"> 154 </span>  40079d: 48 89 c7              mov    rdi,rax
 <span id="L155" class="LineNr"> 155 </span>  4007a0: e8 a9 05 00 00        call   400d4e &lt;std::function&lt;int (int)&gt;::operator()(int) const&gt;
-<span id="L156" class="LineNr"> 156 </span>}
+<span id="L156" class="LineNr"> 156 </span><span class="CPP">}</span>
 <span id="L157" class="LineNr"> 157 </span>  4007a5: c9                    leave
 <span id="L158" class="LineNr"> 158 </span>  4007a6: c3                    ret
 </pre></p>
 
 <p>The indirection fun starts in <code>std::function::operator()</code>:</p>
 <p><pre>
-<span id="L796" class="LineNr"> 796 </span>0000000000400d4e &lt;std::function&lt;int (int)&gt;::operator()(int) const&gt;:
+<span id="L796" class="LineNr"> 796 </span><span class="Header">0000000000400d4e &lt;std::function&lt;int (int)&gt;::operator()(int) const&gt;:</span>
 <span id="L801" class="LineNr"> 801 </span>  400d4e: 55                    push   rbp
 <span id="L802" class="LineNr"> 802 </span>  400d4f: 48 89 e5              mov    rbp,rsp
 <span id="L803" class="LineNr"> 803 </span>  400d52: 53                    push   rbx
 <span id="L804" class="LineNr"> 804 </span>  400d53: 48 83 ec 18           sub    rsp,0x18
 <span id="L805" class="LineNr"> 805 </span>  400d57: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
 <span id="L806" class="LineNr"> 806 </span>  400d5b: 89 75 e4              mov    DWORD PTR [rbp-0x1c],esi
-...
+<span class="CPP"> ...</span>
 <span id="L818" class="LineNr"> 818 </span>  400d73: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
 <span id="L819" class="LineNr"> 819 </span>  400d77: 48 8b 58 18           mov    rbx,QWORD PTR [rax+0x18]
 <span id="L820" class="LineNr"> 820 </span>  400d7b: 48 8d 45 e4           lea    rax,[rbp-0x1c]
@@ -449,7 +449,7 @@ Back in <code>main()</code>, we see that a pointer to the <code>std::function</c
 <span id="L825" class="LineNr"> 825 </span>  400d8e: 48 89 d6              mov    rsi,rdx
 <span id="L826" class="LineNr"> 826 </span>  400d91: 48 89 c7              mov    rdi,rax
 <span id="L827" class="LineNr"> 827 </span>  400d94: ff d3                 call   rbx
-<span id="L828" class="LineNr"> 828 </span>    }
+<span id="L828" class="LineNr"> 828 </span><span class="CPP">    }</span>
 <span id="L829" class="LineNr"> 829 </span>  400d96: 48 83 c4 18           add    rsp,0x18
 <span id="L830" class="LineNr"> 830 </span>  400d9a: 5b                    pop    rbx
 <span id="L831" class="LineNr"> 831 </span>  400d9b: 5d                    pop    rbp
@@ -466,31 +466,31 @@ Back in <code>main()</code>, we see that a pointer to the <code>std::function</c
 </p>
 
 <p><pre>
-<span id="L1064" class="LineNr">1064 </span>0000000000400f97 &lt;std::_Function_handler&lt;int (int), int (*)(int)&gt;::_M_invoke(std::_Any_data const&amp;, int&amp;&amp;)&gt;:
-<span id="L1065" class="LineNr">1065 </span>      _M_invoke(const _Any_data&amp; __functor, _ArgTypes&amp;&amp;... __args)
+<span id="L1064" class="LineNr">1064 </span><span class="Header">0000000000400f97 &lt;std::_Function_handler&lt;int (int), int (*)(int)&gt;::_M_invoke(std::_Any_data const&amp;, int&amp;&amp;)&gt;:</span>
+<span id="L1065" class="LineNr">1065 </span><span class="CPP">      _M_invoke(const _Any_data&amp; __functor, _ArgTypes&amp;&amp;... __args)</span>
 <span id="L1066" class="LineNr">1066 </span>  400f97: 55                    push   rbp
 <span id="L1067" class="LineNr">1067 </span>  400f98: 48 89 e5              mov    rbp,rsp
 <span id="L1068" class="LineNr">1068 </span>  400f9b: 53                    push   rbx
 <span id="L1069" class="LineNr">1069 </span>  400f9c: 48 83 ec 18           sub    rsp,0x18
 <span id="L1070" class="LineNr">1070 </span>  400fa0: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
 <span id="L1071" class="LineNr">1071 </span>  400fa4: 48 89 75 e0           mov    QWORD PTR [rbp-0x20],rsi
-<span id="L1072" class="LineNr">1072 </span>  return (*_Base::_M_get_pointer(__functor))(
+<span id="L1072" class="LineNr">1072 </span><span class="CPP">  return (*_Base::_M_get_pointer(__functor))(</span>
 <span id="L1073" class="LineNr">1073 </span>  400fa8: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
 <span id="L1074" class="LineNr">1074 </span>  400fac: 48 89 c7              mov    rdi,rax
 <span class="String">####                                        rdi -&gt; rax (via 4 function calls!)</span>
 <span id="L1075" class="LineNr">1075 </span>  400faf: e8 3f 02 00 00        call   4011f3 &lt;std::_Function_base::_Base_manager&lt;int (*)(int)&gt;::_M_get_pointer(std::_Any_data const&amp;)&gt;
 <span id="L1076" class="LineNr">1076 </span>  400fb4: 48 8b 18              mov    rbx,QWORD PTR [rax]
-<span id="L1077" class="LineNr">1077 </span>      std::forward&lt;_ArgTypes&gt;(__args)...);
+<span id="L1077" class="LineNr">1077 </span><span class="CPP">      std::forward&lt;_ArgTypes&gt;(__args)...);</span>
 <span id="L1078" class="LineNr">1078 </span>  400fb7: 48 8b 45 e0           mov    rax,QWORD PTR [rbp-0x20]
 <span id="L1079" class="LineNr">1079 </span>  400fbb: 48 89 c7              mov    rdi,rax
 <span class="String">####                                        rdi -&gt; rax</span>
 <span id="L1080" class="LineNr">1080 </span>  400fbe: e8 7c fd ff ff        call   400d3f &lt;int&amp;&amp; std::forward&lt;int&gt;(std::remove_reference&lt;int&gt;::type&amp;)&gt;
-<span id="L1081" class="LineNr">1081 </span>  return (*_Base::_M_get_pointer(__functor))(
+<span id="L1081" class="LineNr">1081 </span><span class="CPP">  return (*_Base::_M_get_pointer(__functor))(</span>
 <span id="L1082" class="LineNr">1082 </span>  400fc3: 8b 00                 mov    eax,DWORD PTR [rax]
-<span id="L1083" class="LineNr">1083 </span>      std::forward&lt;_ArgTypes&gt;(__args)...);
+<span id="L1083" class="LineNr">1083 </span><span class="CPP">      std::forward&lt;_ArgTypes&gt;(__args)...);</span>
 <span id="L1084" class="LineNr">1084 </span>  400fc5: 89 c7                 mov    edi,eax
 <span id="L1085" class="LineNr">1085 </span>  400fc7: ff d3                 call   rbx
-<span id="L1086" class="LineNr">1086 </span>      }
+<span id="L1086" class="LineNr">1086 </span><span class="CPP">      }</span>
 <span id="L1087" class="LineNr">1087 </span>  400fc9: 48 83 c4 18           add    rsp,0x18
 <span id="L1088" class="LineNr">1088 </span>  400fcd: 5b                    pop    rbx
 <span id="L1089" class="LineNr">1089 </span>  400fce: 5d                    pop    rbp
@@ -520,7 +520,7 @@ The code shown is for a <code>Functor</code> instance.
 
 <h5>Constructor:</h5>
 <p><pre>
-<span id="L228" class="LineNr"> 228 </span>  y = function_caller(functor, 5);
+<span id="L228" class="LineNr"> 228 </span><span class="CPP">  y = function_caller(functor, 5);</span>
 <span id="L229" class="LineNr"> 229 </span>  40086d: 8b 95 70 ff ff ff     mov    edx,DWORD PTR [rbp-0x90]
 <span id="L230" class="LineNr"> 230 </span>  400873: 48 8d 45 a0           lea    rax,[rbp-0x60]
 <span id="L231" class="LineNr"> 231 </span>  400877: 89 d6                 mov    esi,edx
@@ -531,16 +531,16 @@ The code shown is for a <code>Functor</code> instance.
 <p>As before, <code>this</code> is passed in <code>rdi</code>. Our <code>functor</code> object, being one <code>int</code>, is passed in <code>esi</code>.</p>
 
 <p><pre>
-<span id="L973" class="LineNr"> 973 </span>0000000000400eb4 &lt;std::function&lt;int (int)&gt;::function&lt;Functor, void, void&gt;(Functor)&gt;:
-<span id="L974" class="LineNr"> 974 </span>      function&lt;_Res(_ArgTypes...)&gt;::
+<span id="L973" class="LineNr"> 973 </span><span class="Header">0000000000400eb4 &lt;std::function&lt;int (int)&gt;::function&lt;Functor, void, void&gt;(Functor)&gt;:</span>
+<span id="L974" class="LineNr"> 974 </span><span class="CPP">      function&lt;_Res(_ArgTypes...)&gt;::</span>
 <span id="L975" class="LineNr"> 975 </span>  400eb4: 55                    push   rbp
 <span id="L976" class="LineNr"> 976 </span>  400eb5: 48 89 e5              mov    rbp,rsp
 <span id="L977" class="LineNr"> 977 </span>  400eb8: 53                    push   rbx
 <span id="L978" class="LineNr"> 978 </span>  400eb9: 48 83 ec 18           sub    rsp,0x18
 <span id="L979" class="LineNr"> 979 </span>  400ebd: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
 <span id="L980" class="LineNr"> 980 </span>  400ec1: 89 75 e0              mov    DWORD PTR [rbp-0x20],esi
- ...
-<span id="L994" class="LineNr"> 994 </span>      _My_handler::_M_init_functor(_M_functor, std::move(__f));
+<span class="CPP"> ...</span>
+<span id="L994" class="LineNr"> 994 </span><span class="CPP">      _My_handler::_M_init_functor(_M_functor, std::move(__f));</span>
 <span id="L995" class="LineNr"> 995 </span>  400eec: 48 8d 45 e0           lea    rax,[rbp-0x20]
 <span id="L996" class="LineNr"> 996 </span>  400ef0: 48 89 c7              mov    rdi,rax
 <span class="String">####                                        rdi -&gt; rax</span>
@@ -561,15 +561,15 @@ The code shown is for a <code>Functor</code> instance.
 </p>
 
 <p><pre>
-<span id="L1409" class="LineNr">1409 </span>00000000004012b6 &lt;std::_Function_base::_Base_manager&lt;Functor&gt;::_M_init_functor(std::_Any_data&amp;, Functor&amp;&amp;, std::integral_constant&lt;bool, true&gt;)&gt;:
-<span id="L1410" class="LineNr">1410 </span>  _M_init_functor(_Any_data&amp; __functor, _Functor&amp;&amp; __f, true_type)
+<span id="L1409" class="LineNr">1409 </span><span class="Header">00000000004012b6 &lt;std::_Function_base::_Base_manager&lt;Functor&gt;::_M_init_functor(std::_Any_data&amp;, Functor&amp;&amp;, std::integral_constant&lt;bool, true&gt;)&gt;:</span>
+<span id="L1410" class="LineNr">1410 </span><span class="CPP">  _M_init_functor(_Any_data&amp; __functor, _Functor&amp;&amp; __f, true_type)</span>
 <span id="L1411" class="LineNr">1411 </span>  4012b6: 55                    push   rbp
 <span id="L1412" class="LineNr">1412 </span>  4012b7: 48 89 e5              mov    rbp,rsp
 <span id="L1413" class="LineNr">1413 </span>  4012ba: 53                    push   rbx
 <span id="L1414" class="LineNr">1414 </span>  4012bb: 48 83 ec 18           sub    rsp,0x18
 <span id="L1415" class="LineNr">1415 </span>  4012bf: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
 <span id="L1416" class="LineNr">1416 </span>  4012c3: 48 89 75 e0           mov    QWORD PTR [rbp-0x20],rsi
-<span id="L1417" class="LineNr">1417 </span>  { new (__functor._M_access()) _Functor(std::move(__f)); }
+<span id="L1417" class="LineNr">1417 </span><span class="CPP">  { new (__functor._M_access()) _Functor(std::move(__f)); }</span>
 <span id="L1418" class="LineNr">1418 </span>  4012c7: 48 8b 45 e0           mov    rax,QWORD PTR [rbp-0x20]
 <span id="L1419" class="LineNr">1419 </span>  4012cb: 48 89 c7              mov    rdi,rax
 <span class="String">####                                        rdi -&gt; rax</span>
@@ -605,15 +605,15 @@ The code shown is for a <code>Functor</code> instance.
 
 <p>Back in the constructor for <code>std::function</code>, the vtable is set up:</p>
 <p><pre>
-<span id="L1003" class="LineNr">1003 </span>      _M_invoker = &amp;_My_handler::_M_invoke;
+<span id="L1003" class="LineNr">1003 </span><span class="CPP">      _M_invoker = &amp;_My_handler::_M_invoke;</span>
 <span id="L1004" class="LineNr">1004 </span>  400f0a: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
 <span id="L1005" class="LineNr">1005 </span>  400f0e: 48 c7 40 18 c6 10 40  mov    QWORD PTR [rax+0x18],0x4010c6
 <span id="L1006" class="LineNr">1006 </span>  400f15: 00
-<span id="L1007" class="LineNr">1007 </span>      _M_manager = &amp;_My_handler::_M_manager;
+<span id="L1007" class="LineNr">1007 </span><span class="CPP">      _M_manager = &amp;_My_handler::_M_manager;</span>
 <span id="L1008" class="LineNr">1008 </span>  400f16: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
 <span id="L1009" class="LineNr">1009 </span>  400f1a: 48 c7 40 10 02 11 40  mov    QWORD PTR [rax+0x10],0x401102
 <span id="L1010" class="LineNr">1010 </span>  400f21: 00
-<span id="L1011" class="LineNr">1011 </span>      }
+<span id="L1011" class="LineNr">1011 </span><span class="CPP">      }</span>
 </pre></p>
 
 <p>Note that this time we have a different invoke function, <code>0x4010c6</code>.</p>
@@ -633,30 +633,30 @@ of <code>std::function</code>).
 </p>
 
 <p><pre>
-<span id="L1195" class="LineNr">1195 </span>00000000004010c6 &lt;std::_Function_handler&lt;int (int), Functor&gt;::_M_invoke(std::_Any_data const&amp;, int&amp;&amp;)&gt;:
-<span id="L1196" class="LineNr">1196 </span>      _M_invoke(const _Any_data&amp; __functor, _ArgTypes&amp;&amp;... __args)
+<span id="L1195" class="LineNr">1195 </span><span class="Header">00000000004010c6 &lt;std::_Function_handler&lt;int (int), Functor&gt;::_M_invoke(std::_Any_data const&amp;, int&amp;&amp;)&gt;:</span>
+<span id="L1196" class="LineNr">1196 </span><span class="CPP">      _M_invoke(const _Any_data&amp; __functor, _ArgTypes&amp;&amp;... __args)</span>
 <span id="L1197" class="LineNr">1197 </span>  4010c6: 55                    push   rbp
 <span id="L1198" class="LineNr">1198 </span>  4010c7: 48 89 e5              mov    rbp,rsp
 <span id="L1199" class="LineNr">1199 </span>  4010ca: 53                    push   rbx
 <span id="L1200" class="LineNr">1200 </span>  4010cb: 48 83 ec 18           sub    rsp,0x18
 <span id="L1201" class="LineNr">1201 </span>  4010cf: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
 <span id="L1202" class="LineNr">1202 </span>  4010d3: 48 89 75 e0           mov    QWORD PTR [rbp-0x20],rsi
-<span id="L1203" class="LineNr">1203 </span>      std::forward&lt;_ArgTypes&gt;(__args)...);
+<span id="L1203" class="LineNr">1203 </span><span class="CPP">      std::forward&lt;_ArgTypes&gt;(__args)...);</span>
 <span id="L1204" class="LineNr">1204 </span>  4010d7: 48 8b 45 e0           mov    rax,QWORD PTR [rbp-0x20]
 <span id="L1205" class="LineNr">1205 </span>  4010db: 48 89 c7              mov    rdi,rax
 <span class="String">####                                        rdi -&gt; rax</span>
 <span id="L1206" class="LineNr">1206 </span>  4010de: e8 5c fc ff ff        call   400d3f &lt;int&amp;&amp; std::forward&lt;int&gt;(std::remove_reference&lt;int&gt;::type&amp;)&gt;
-<span id="L1207" class="LineNr">1207 </span>  return (*_Base::_M_get_pointer(__functor))(
+<span id="L1207" class="LineNr">1207 </span><span class="CPP">  return (*_Base::_M_get_pointer(__functor))(</span>
 <span id="L1208" class="LineNr">1208 </span>  4010e3: 8b 18                 mov    ebx,DWORD PTR [rax]
 <span id="L1209" class="LineNr">1209 </span>  4010e5: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
 <span id="L1210" class="LineNr">1210 </span>  4010e9: 48 89 c7              mov    rdi,rax
 <span class="String">####                                        rdi -&gt; rax (via 4 function calls!)</span>
 <span id="L1211" class="LineNr">1211 </span>  4010ec: e8 0f 02 00 00        call   401300 &lt;std::_Function_base::_Base_manager&lt;Functor&gt;::_M_get_pointer(std::_Any_data const&amp;)&gt;
-<span id="L1212" class="LineNr">1212 </span>      std::forward&lt;_ArgTypes&gt;(__args)...);
+<span id="L1212" class="LineNr">1212 </span><span class="CPP">      std::forward&lt;_ArgTypes&gt;(__args)...);</span>
 <span id="L1213" class="LineNr">1213 </span>  4010f1: 89 de                 mov    esi,ebx
 <span id="L1214" class="LineNr">1214 </span>  4010f3: 48 89 c7              mov    rdi,rax
 <span id="L1215" class="LineNr">1215 </span>  4010f6: e8 15 fc ff ff        call   400d10 &lt;Functor::operator()(int)&gt;
-<span id="L1216" class="LineNr">1216 </span>      }
+<span id="L1216" class="LineNr">1216 </span><span class="CPP">      }</span>
 <span id="L1217" class="LineNr">1217 </span>  4010fb: 48 83 c4 18           add    rsp,0x18
 <span id="L1218" class="LineNr">1218 </span>  4010ff: 5b                    pop    rbx
 <span id="L1219" class="LineNr">1219 </span>  401100: 5d                    pop    rbp
