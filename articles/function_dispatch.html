@@ -237,42 +237,6 @@ Again, this code is identical to that generated for the <code>Functor</code> ins
 to call our lambda's <code>operator()</code>.
 </p>
 
-<!--
-<h4>An Improvement:</h4>
-<p>We can make one change to our code to simplify the work <code>template_caller</code> must do before calling a functor or lambda.
-Recall that the associated functor or lambda object is copied onto the stack of <code>template_caller</code>, then the address of
-that copy is passed to <code>operator()</code>. Passing the callable thing by reference removes this copy:
-</p>
-<p><pre>
-<span id="L19" class="LineNr">19 </span><span class="Type">template</span>&lt;<span class="Type">class</span> Function&gt;
-<span id="L20" class="LineNr">20 </span><span class="Type">int</span> template_caller(Function&amp; f, <span class="Type">int</span> arg) {
-<span id="L21" class="LineNr">21 </span>  <span class="Statement">return</span> f(arg);
-<span id="L22" class="LineNr">22 </span>}
-</pre></p>
-<p>Note that the <code>Function</code> parameter is not <code>const</code>&mdash;if it were, it would require <code>operator()</code> to be const,
-which is not the case for <code>Functor</code> or capture-by-reference lambdas. The reference has no effect on the code generated for the plain
-function instance; the compiler treats the parameter as a function reference, <code>int (&amp;)(int)</code>, instead of a pointer.</p>
-
-<p>The disassembly reveals that we no longer need to perform a copy or compute the address of the copied object:</p>
-<p><pre>
-<span id="L289" class="LineNr"> 289 </span><span class="Header">000000000040093a &lt;int template_caller&lt;main::{lambda(int)#1}&gt;(main::{lambda(int)#1}&amp;, int)&gt;:</span>
-<span id="L290" class="LineNr"> 290 </span><span class="CPP">int template_caller(Function&amp; f, int arg) {</span>
-<span id="L291" class="LineNr"> 291 </span>  40093a: 55                    push   rbp
-<span id="L292" class="LineNr"> 292 </span>  40093b: 48 89 e5              mov    rbp,rsp
-<span id="L293" class="LineNr"> 293 </span>  40093e: 48 83 ec 10           sub    rsp,0x10
-<span id="L294" class="LineNr"> 294 </span>  400942: 48 89 7d f8           mov    QWORD PTR [rbp-0x8],rdi
-<span id="L295" class="LineNr"> 295 </span>  400946: 89 75 f4              mov    DWORD PTR [rbp-0xc],esi
-<span id="L296" class="LineNr"> 296 </span><span class="CPP">  return f(arg);</span>
-<span id="L297" class="LineNr"> 297 </span>  400949: 8b 55 f4              mov    edx,DWORD PTR [rbp-0xc]
-<span id="L298" class="LineNr"> 298 </span>  40094c: 48 8b 45 f8           mov    rax,QWORD PTR [rbp-0x8]
-<span id="L299" class="LineNr"> 299 </span>  400950: 89 d6                 mov    esi,edx
-<span id="L300" class="LineNr"> 300 </span>  400952: 48 89 c7              mov    rdi,rax
-<span id="L301" class="LineNr"> 301 </span>  400955: e8 4e fe ff ff        call   4007a8 &lt;main::{lambda(int)#1}::operator()(int) const&gt;
-<span id="L302" class="LineNr"> 302 </span><span class="CPP">}</span>
-<span id="L303" class="LineNr"> 303 </span>  40095a: c9                    leave
-<span id="L304" class="LineNr"> 304 </span>  40095b: c3                    ret
-</pre></p>
--->
 <h4>Summary:</h4>
 <p>Template type deduction is a low-overhead approach to passing callable things to functions in C++.
 In the case of functors and lambdas, the associated template instance can directly call the appropriate <code>operator()</code>; plain
