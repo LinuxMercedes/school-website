@@ -1,0 +1,874 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>Passing C++ Lambdas Under The Hood</title>
+<link href="../style.css" rel="stylesheet" type="text/css">
+<!-- Styling for vim syntax hilighting -->
+<style type="text/css">
+<!--
+pre { white-space: pre-wrap; font-family: monospace; color: #202020; background-color: #eeeeee; }
+.Type { color: #af5faf; }
+.LineNr { color: #808080; }
+.Comment { color: #505050; }
+.Constant { color: #0087ff; }
+.String { color: #005fd7; }
+.PreProc { color: #00d75f; }
+.Statement { color: #875faf; }
+.CPP { color: #af5faf; }
+.Header { color: #875faf; }
+p { clear:both; }
+pre { float:left; margin:5px; padding:2px; }
+h3 { display:block; }
+code { color: #202020; background-color:#eeeeee; }
+-->
+</style>
+<!-- TODO: asm syntax highlighting, proofreading, better title -->
+</head>
+<body>
+<div><a href="..">Home</a> <a href="index.html">Articles</a><hr></div>
+<h2>Passing C++ Lambdas Under The Hood</h2>
+<h3>Introduction</h3>
+<p>
+When working with lambdas, functor classes, and plain 'ol functions, you may want to pass them to other functions.
+It wouldn't be C++ if there weren't at least two ways of doing this, and as it turns out, there are three: your venerable
+C-style function pointers, template type deduction, and
+<a href="http://www.cplusplus.com/reference/functional/function/"><code>std::function</code></a>.
+We will investigate the latter two approaches in moderate detail; function pointers are relatively straightforward and cannot be used
+for lambdas or functors, so they are less interesting.
+</p>
+
+<h3>The Code</h3>
+<p>We have three callable things: a function, a functor class, and a lambda, and two functions which can take a callable thing:
+<code>template_caller</code> and <code>function_caller</code>.
+</p>
+<p><pre>
+<span id="L1" class="LineNr"> 1 </span><span class="PreProc">#include</span><span class="String">&lt;functional&gt;</span>
+<span id="L2" class="LineNr"> 2 </span>
+<span id="L3" class="LineNr"> 3 </span><span class="Type">int</span> function(<span class="Type">int</span> a) {
+<span id="L4" class="LineNr"> 4 </span>  <span class="Statement">return</span> a + <span class="Constant">3</span>;
+<span id="L5" class="LineNr"> 5 </span>}
+<span id="L6" class="LineNr"> 6 </span>
+<span id="L7" class="LineNr"> 7 </span><span class="Type">class</span> Functor {
+<span id="L8" class="LineNr"> 8 </span>  <span class="Statement">public</span>:
+<span id="L9" class="LineNr"> 9 </span>    Functor(<span class="Type">const</span> <span class="Type">int</span> x):m_x(x) {}
+<span id="L10" class="LineNr">10 </span>
+<span id="L11" class="LineNr">11 </span>    <span class="Type">int</span> <span class="Operator">operator</span>()(<span class="Type">int</span> a) {
+<span id="L12" class="LineNr">12 </span>      <span class="Statement">return</span> a + m_x;
+<span id="L13" class="LineNr">13 </span>    }
+<span id="L14" class="LineNr">14 </span>
+<span id="L15" class="LineNr">15 </span>  <span class="Statement">private</span>:
+<span id="L16" class="LineNr">16 </span>    <span class="Type">int</span> m_x;
+<span id="L17" class="LineNr">17 </span>};
+<span id="L18" class="LineNr">18 </span>
+<span id="L19" class="LineNr">19 </span><span class="Type">template</span>&lt;<span class="Type">class</span> Function&gt;
+<span id="L20" class="LineNr">20 </span><span class="Type">int</span> template_caller(Function f, <span class="Type">int</span> arg) {
+<span id="L21" class="LineNr">21 </span>  <span class="Statement">return</span> f(arg);
+<span id="L22" class="LineNr">22 </span>}
+<span id="L23" class="LineNr">23 </span>
+<span id="L24" class="LineNr">24 </span><span class="Type">int</span> function_caller(std::function&lt;<span class="Type">int</span>(<span class="Type">int</span>)&gt; f, <span class="Type">int</span> arg) {
+<span id="L25" class="LineNr">25 </span>  <span class="Statement">return</span> f(arg);
+<span id="L26" class="LineNr">26 </span>}
+<span id="L27" class="LineNr">27 </span>
+<span id="L28" class="LineNr">28 </span><span class="Type">int</span> main() {
+<span id="L29" class="LineNr">29 </span>  <span class="Type">int</span> x = <span class="Constant">3</span>;
+<span id="L30" class="LineNr">30 </span>  <span class="Type">volatile</span> <span class="Type">int</span> y;
+<span id="L31" class="LineNr">31 </span>
+<span id="L32" class="LineNr">32 </span>  Functor functor(x);
+<span id="L33" class="LineNr">33 </span>  <span class="Type">auto</span> lambda = [=] (<span class="Type">int</span> a) { <span class="Statement">return</span> a + x; };
+<span id="L34" class="LineNr">34 </span>
+<span id="L35" class="LineNr">35 </span>  y = template_caller(function, <span class="Constant">5</span>);
+<span id="L36" class="LineNr">36 </span>  y = template_caller(functor, <span class="Constant">5</span>);
+<span id="L37" class="LineNr">37 </span>  y = template_caller(lambda, <span class="Constant">5</span>);
+<span id="L38" class="LineNr">38 </span>
+<span id="L39" class="LineNr">39 </span>  y = function_caller(function, <span class="Constant">5</span>);
+<span id="L40" class="LineNr">40 </span>  y = function_caller(functor, <span class="Constant">5</span>);
+<span id="L41" class="LineNr">41 </span>  y = function_caller(lambda, <span class="Constant">5</span>);
+<span id="L42" class="LineNr">42 </span>
+<span id="L43" class="LineNr">43 </span>  <span class="Statement">return</span> <span class="Constant">0</span>;
+<span id="L44" class="LineNr">44 </span>}
+</pre></p>
+<p>This code, along with a makefile to generate disassemblies, are available <a href="lambdas">here</a>.
+The disassembly shown here was generated with GCC 6.2.1 with no optimizations and the <code>-g</code> flag enabled.</p>
+
+<h3>Template Type Deduction</h3>
+As we expect, C++ produces three instantiations of <code>template_caller</code>, one for each type of callable thing.
+Let's see how the types and assembly differ for each instance.
+
+<h4>Function:</h4>
+
+<p>
+First, let's see the place <code>template_caller</code> is called in <code>main()</code> so we can see how the arguments are passed:
+</p>
+
+<p><pre>
+<span id="L197" class="LineNr"> 197 </span><span class="CPP">  y = template_caller(function, 5);</span>
+<span id="L198" class="LineNr"> 198 </span>  4007f0: be 05 00 00 00        mov    esi,0x5
+<span id="L199" class="LineNr"> 199 </span>  4007f5: bf 76 07 40 00        mov    edi,0x400776
+<span id="L200" class="LineNr"> 200 </span>  4007fa: e8 9a 05 00 00        call   400d99 &lt;int template_caller&lt;int (*)(int)&gt;(int (*)(int), int)&gt;
+<span id="L201" class="LineNr"> 201 </span>  4007ff: 89 85 7c ff ff ff     mov    DWORD PTR [rbp-0x84],eax
+</pre></p>
+
+<p>
+If you guessed that <code>0x400776</code> is the address of <code>int function(int a)</code>, you get a cookie.
+This function follows the standard calling convention: first argument in <code>edi</code>, second argument in <code>esi</code>.
+(It's interesting to note that, despite being compiled for a 64-bit system, the function pointer is stored in <code>edi</code> and
+not <code>rdi</code> as you would expect.) <!--is it clearing the high bits of rdi automagically?-->
+
+<p>Here is the template instantiation of <code>template_caller</code> that is called:</p>
+<p><pre>
+<span id="L835" class="LineNr"> 835 </span><span class="Header">0000000000400d99 &lt;int template_caller&lt;int (*)(int)&gt;(int (*)(int), int)&gt;:</span>
+<span id="L836" class="LineNr"> 836 </span><span class="CPP">int template_caller(Function f, int arg) {</span>
+<span id="L837" class="LineNr"> 837 </span>  400d99: 55                    push   rbp
+<span id="L838" class="LineNr"> 838 </span>  400d9a: 48 89 e5              mov    rbp,rsp
+<span id="L839" class="LineNr"> 839 </span>  400d9d: 48 83 ec 10           sub    rsp,0x10
+<span id="L840" class="LineNr"> 840 </span>  400da1: 48 89 7d f8           mov    QWORD PTR [rbp-0x8],rdi
+<span id="L841" class="LineNr"> 841 </span>  400da5: 89 75 f4              mov    DWORD PTR [rbp-0xc],esi
+<span id="L842" class="LineNr"> 842 </span><span class="CPP">  return f(arg);</span>
+<span id="L843" class="LineNr"> 843 </span>  400da8: 8b 55 f4              mov    edx,DWORD PTR [rbp-0xc]
+<span id="L844" class="LineNr"> 844 </span>  400dab: 48 8b 45 f8           mov    rax,QWORD PTR [rbp-0x8]
+<span id="L845" class="LineNr"> 845 </span>  400daf: 89 d7                 mov    edi,edx
+<span id="L846" class="LineNr"> 846 </span>  400db1: ff d0                 call   rax
+<span id="L847" class="LineNr"> 847 </span><span class="CPP">}</span>
+<span id="L848" class="LineNr"> 848 </span>  400db3: c9                    leave
+<span id="L849" class="LineNr"> 849 </span>  400db4: c3                    ret
+</pre></p>
+
+<p>
+Note the type of the template parameter: <code>int (*)(int)</code>&mdash;a C-style function pointer.
+These are lightweight, but do not carry any sort of object along with them and thus cannot be used for functors or lambdas.
+</p>
+
+<p>
+The code of <code>template_caller</code> first sets up the registers to call the function: <code>arg</code> is moved from <code>esi</code> to <code>edi</code>
+by lines 841,843, and 845. Then, it places <code>f</code>, the address of the function to be called, in <code>rax</code> via lines 840 and 844.
+Finally, line 846 calls the function; since we just return the value of the called function, there's nothing else to do.
+(Note that line 840 uses <code>rdi</code>, as opposed to <code>main()</code> using <code>edi</code>.)
+</p>
+
+<h4>Functor:</h4>
+<p>Again, let's first look at the call site in <code>main()</code>:</p>
+<p><pre>
+<span id="L202" class="LineNr"> 202 </span><span class="CPP">  y = template_caller(functor, 5);</span>
+<span id="L203" class="LineNr"> 203 </span>  400805: 8b 85 70 ff ff ff     mov    eax,DWORD PTR [rbp-0x90]
+<span id="L204" class="LineNr"> 204 </span>  40080b: be 05 00 00 00        mov    esi,0x5
+<span id="L205" class="LineNr"> 205 </span>  400810: 89 c7                 mov    edi,eax
+<span id="L206" class="LineNr"> 206 </span>  400812: e8 9e 05 00 00        call   400db5 &lt;int template_caller&lt;Functor&gt;(Functor, int)&gt;
+<span id="L207" class="LineNr"> 207 </span>  400817: 89 85 7c ff ff ff     mov    DWORD PTR [rbp-0x84],eax
+</pre></p>
+<p>
+Naturally <code>rbp-0x90</code> is the address of the <code>functor</code> object declared earlier in <code>main()</code>.
+Note that line 203 copies the object itself into <code>eax</code>, not a pointer to the object. (This is possible because
+<code>Functor</code> consists of just one <code>int</code>, which easily fits in a register.)
+The call is very similar to the call for a plain function, except the first parameter is an object instead of a function pointer.
+</p>
+
+<p><pre>
+<span id="L851" class="LineNr"> 851 </span><span class="Header">0000000000400db5 &lt;int template_caller&lt;Functor&gt;(Functor, int)&gt;:</span>
+<span id="L852" class="LineNr"> 852 </span><span class="CPP">int template_caller(Function f, int arg) {</span>
+<span id="L853" class="LineNr"> 853 </span>  400db5: 55                    push   rbp
+<span id="L854" class="LineNr"> 854 </span>  400db6: 48 89 e5              mov    rbp,rsp
+<span id="L855" class="LineNr"> 855 </span>  400db9: 48 83 ec 10           sub    rsp,0x10
+<span id="L856" class="LineNr"> 856 </span>  400dbd: 89 7d f0              mov    DWORD PTR [rbp-0x10],edi
+<span id="L857" class="LineNr"> 857 </span>  400dc0: 89 75 fc              mov    DWORD PTR [rbp-0x4],esi
+<span id="L858" class="LineNr"> 858 </span><span class="CPP">  return f(arg);</span>
+<span id="L859" class="LineNr"> 859 </span>  400dc3: 8b 55 fc              mov    edx,DWORD PTR [rbp-0x4]
+<span id="L860" class="LineNr"> 860 </span>  400dc6: 48 8d 45 f0           lea    rax,[rbp-0x10]
+<span id="L861" class="LineNr"> 861 </span>  400dca: 89 d6                 mov    esi,edx
+<span id="L862" class="LineNr"> 862 </span>  400dcc: 48 89 c7              mov    rdi,rax
+<span id="L863" class="LineNr"> 863 </span>  400dcf: e8 38 ff ff ff        call   400d0c &lt;Functor::operator()(int)&gt;
+<span id="L864" class="LineNr"> 864 </span><span class="CPP">}</span>
+<span id="L865" class="LineNr"> 865 </span>  400dd4: c9                    leave
+<span id="L866" class="LineNr"> 866 </span>  400dd5: c3                    ret
+</pre></p>
+
+<p>
+Here, we have an instance of <code>template_caller</code> for the type <code>Functor</code>.
+Notice that the two parameters to this function are a <code>Functor</code> object in <code>edi</code> and an <code>int</code> argument in <code>esi</code>.
+Our call to <code>Functor::operator()</code> expects a pointer to a <code>Functor</code> object, so lines 856, 860, and 862 copy the object to
+<code>template_caller</code>'s stack frame and place that address in <code>rdi</code>.
+Lines 857, 859, and 861 move <code>esi</code> to <code>esi</code> (wow, so efficient!).
+Last, but not least, line 863 directly calls <code>operator()</code>.
+</p>
+
+<h4>Lambda:</h4>
+
+<p>
+Finally, let's examine how <code>template_caller</code> works when passed a lambda.
+The call site is exactly the same as for the functor (<code>rbp-0xa0</code> is the lambda object's address):
+</p>
+
+<p><pre>
+<span id="L208" class="LineNr"> 208 </span><span class="CPP">  y = template_caller(lambda, 5);</span>
+<span id="L209" class="LineNr"> 209 </span>  40081d: 8b 85 60 ff ff ff     mov    eax,DWORD PTR [rbp-0xa0]
+<span id="L210" class="LineNr"> 210 </span>  400823: be 05 00 00 00        mov    esi,0x5
+<span id="L211" class="LineNr"> 211 </span>  400828: 89 c7                 mov    edi,eax
+<span id="L212" class="LineNr"> 212 </span>  40082a: e8 07 01 00 00        call   400936 &lt;int template_caller&lt;main::{lambda(int)#1}&gt;(main::{lambda(int)#1}, int)&gt;
+<span id="L213" class="LineNr"> 213 </span>  40082f: 89 85 7c ff ff ff     mov    DWORD PTR [rbp-0x84],eax
+</pre></p>
+
+<p>And the instance of <code>template_caller</code> itself:</p>
+<p><pre>
+<span id="L289" class="LineNr"> 289 </span><span class="Header">0000000000400936 &lt;int template_caller&lt;main::{lambda(int)#1}&gt;(main::{lambda(int)#1}, int)&gt;:</span>
+<span id="L290" class="LineNr"> 290 </span><span class="CPP">int template_caller(Function f, int arg) {</span>
+<span id="L291" class="LineNr"> 291 </span>  400936: 55                    push   rbp
+<span id="L292" class="LineNr"> 292 </span>  400937: 48 89 e5              mov    rbp,rsp
+<span id="L293" class="LineNr"> 293 </span>  40093a: 48 83 ec 10           sub    rsp,0x10
+<span id="L294" class="LineNr"> 294 </span>  40093e: 89 7d f0              mov    DWORD PTR [rbp-0x10],edi
+<span id="L295" class="LineNr"> 295 </span>  400941: 89 75 fc              mov    DWORD PTR [rbp-0x4],esi
+<span id="L296" class="LineNr"> 296 </span><span class="CPP">  return f(arg);</span>
+<span id="L297" class="LineNr"> 297 </span>  400944: 8b 55 fc              mov    edx,DWORD PTR [rbp-0x4]
+<span id="L298" class="LineNr"> 298 </span>  400947: 48 8d 45 f0           lea    rax,[rbp-0x10]
+<span id="L299" class="LineNr"> 299 </span>  40094b: 89 d6                 mov    esi,edx
+<span id="L300" class="LineNr"> 300 </span>  40094d: 48 89 c7              mov    rdi,rax
+<span id="L301" class="LineNr"> 301 </span>  400950: e8 53 fe ff ff        call   4007a8 &lt;main::{lambda(int)#1}::operator()(int) const&gt;
+<span id="L302" class="LineNr"> 302 </span><span class="CPP">}</span>
+<span id="L303" class="LineNr"> 303 </span>  400955: c9                    leave
+<span id="L304" class="LineNr"> 304 </span>  400956: c3                    ret
+</pre></p>
+
+<p>
+The type parameter here is something unusual: <code>main::{lambda(int)#1}</code>, which clearly isn't valid C++ syntax&mdash;you couldn't explicitly
+write this type in a program (which is why we rely on <code>auto</code> to deduce the type for us).
+This is the type of the functor class GCC generates on-the-fly when you make a lambda, which is why lambdas and functors look so similar behind the scenes.
+</p>
+
+<p>
+Again, this code is identical to that generated for the <code>Functor</code> instance of <code>template_caller</code>, except the function is hard-wired
+to call our lambda's <code>operator()</code>.
+</p>
+
+<!--
+<h4>An Improvement:</h4>
+<p>We can make one change to our code to simplify the work <code>template_caller</code> must do before calling a functor or lambda.
+Recall that the associated functor or lambda object is copied onto the stack of <code>template_caller</code>, then the address of
+that copy is passed to <code>operator()</code>. Passing the callable thing by reference removes this copy:
+</p>
+<p><pre>
+<span id="L19" class="LineNr">19 </span><span class="Type">template</span>&lt;<span class="Type">class</span> Function&gt;
+<span id="L20" class="LineNr">20 </span><span class="Type">int</span> template_caller(Function&amp; f, <span class="Type">int</span> arg) {
+<span id="L21" class="LineNr">21 </span>  <span class="Statement">return</span> f(arg);
+<span id="L22" class="LineNr">22 </span>}
+</pre></p>
+<p>Note that the <code>Function</code> parameter is not <code>const</code>&mdash;if it were, it would require <code>operator()</code> to be const,
+which is not the case for <code>Functor</code> or capture-by-reference lambdas. The reference has no effect on the code generated for the plain
+function instance; the compiler treats the parameter as a function reference, <code>int (&amp;)(int)</code>, instead of a pointer.</p>
+
+<p>The disassembly reveals that we no longer need to perform a copy or compute the address of the copied object:</p>
+<p><pre>
+<span id="L289" class="LineNr"> 289 </span><span class="Header">000000000040093a &lt;int template_caller&lt;main::{lambda(int)#1}&gt;(main::{lambda(int)#1}&amp;, int)&gt;:</span>
+<span id="L290" class="LineNr"> 290 </span><span class="CPP">int template_caller(Function&amp; f, int arg) {</span>
+<span id="L291" class="LineNr"> 291 </span>  40093a: 55                    push   rbp
+<span id="L292" class="LineNr"> 292 </span>  40093b: 48 89 e5              mov    rbp,rsp
+<span id="L293" class="LineNr"> 293 </span>  40093e: 48 83 ec 10           sub    rsp,0x10
+<span id="L294" class="LineNr"> 294 </span>  400942: 48 89 7d f8           mov    QWORD PTR [rbp-0x8],rdi
+<span id="L295" class="LineNr"> 295 </span>  400946: 89 75 f4              mov    DWORD PTR [rbp-0xc],esi
+<span id="L296" class="LineNr"> 296 </span><span class="CPP">  return f(arg);</span>
+<span id="L297" class="LineNr"> 297 </span>  400949: 8b 55 f4              mov    edx,DWORD PTR [rbp-0xc]
+<span id="L298" class="LineNr"> 298 </span>  40094c: 48 8b 45 f8           mov    rax,QWORD PTR [rbp-0x8]
+<span id="L299" class="LineNr"> 299 </span>  400950: 89 d6                 mov    esi,edx
+<span id="L300" class="LineNr"> 300 </span>  400952: 48 89 c7              mov    rdi,rax
+<span id="L301" class="LineNr"> 301 </span>  400955: e8 4e fe ff ff        call   4007a8 &lt;main::{lambda(int)#1}::operator()(int) const&gt;
+<span id="L302" class="LineNr"> 302 </span><span class="CPP">}</span>
+<span id="L303" class="LineNr"> 303 </span>  40095a: c9                    leave
+<span id="L304" class="LineNr"> 304 </span>  40095b: c3                    ret
+</pre></p>
+-->
+<h4>Summary:</h4>
+<p>Template type deduction is a low-overhead approach to passing callable things to functions in C++.
+In the case of functors and lambdas, the associated template instance can directly call the appropriate <code>operator()</code>; plain
+functions require one memory read to read the address of the function to call.
+</p>
+
+<p>
+Passing each callable thing to <code>template_caller</code> generates a different template instantiation, since all three callables
+have different types. Passing a plain function produces a template instance for a function pointer; this template instance will be used
+for every plain function of the same type (taking one <code>int</code> and returning an <code>int</code>). Passing a functor or lambda
+produces a template instance for that particular functor class or lambda.
+</p>
+<p>
+Functors and lambdas can't reuse template instatiations for
+different lambdas or functor classes because the template instance must hard-code the <code>operator()</code> to be called, unlike with
+function pointers, where the function to be called is a parameter to <code>template_caller</code>. To achieve such reuse, we need to
+introduce another layer of indirection. <code>std::function</code> implements this indirection with a virtual <code>operator()</code> function.
+</p>
+
+<h3>Using <code>std::function</code></h3>
+<p>Hold on to your hats; we're about to
+<a href="http://67.media.tumblr.com/125698744ff931109565894715b9abfa/tumblr_o16n2kBlpX1ta3qyvo1_1280.jpg">diassemble</a>
+some of the C++ standard library!</p>
+
+<p>
+Since <code>std::function</code> gives a uniform means to refer to callable things, <code>function_caller</code> is not templated, and thus
+the analysis of how <code>function_caller</code> works will not depend on whether it's calling a function, a functor, or a lambda.
+The only difference between the different calls is what is passed in <code>main()</code>, so let's start there.
+For each call to <code>function_caller</code>, we should expect three function calls:
+<ol>
+	<li><code>std::function</code>'s constructor, to construct the object passed to <code>function_caller</code></li>
+	<li><code>function_caller</code></li>
+	<li><code>std::function</code>'s destructor
+</ol>
+
+We'll examine the first two; the destructor is relatively uninteresting.
+</p>
+
+<h4>Function:</h4>
+<h5>Constructor:</h5>
+<p><pre>
+<span id="L215" class="LineNr"> 215 </span>  y = function_caller(function, 5);
+<span id="L216" class="LineNr"> 216 </span>  400839: 48 8d 45 80           lea    rax,[rbp-0x80]
+<span id="L217" class="LineNr"> 217 </span>  40083d: be 76 07 40 00        mov    esi,0x400776
+<span id="L218" class="LineNr"> 218 </span>  400842: 48 89 c7              mov    rdi,rax
+<span id="L219" class="LineNr"> 219 </span>  400845: e8 c8 05 00 00        call   400e12 &lt;std::function&lt;int (int)&gt;::function&lt;int (*)(int), void, void&gt;(int (*)(int))&gt;
+</pre></p>
+
+<p>
+Here the constructor is passed the address (<code>rbp-0x80</code>) of a new object to construct in <code>rdi</code> and the address of <code>function</code>,
+<code>0x400776</code> in <code>esi</code>. The constructor does some preliminary checks, but the fun starts on line 928, where we see the start of a call
+to initialize a <code>_My_handler</code> object, which is specialized to call the callable thing <code>std::function</code> is boxing (in this case, a
+function pointer).
+</p>
+
+<p><pre>
+<span id="L907" class="LineNr"> 907 </span>0000000000400e12 &lt;std::function&lt;int (int)&gt;::function&lt;int (*)(int), void, void&gt;(int (*)(int))&gt;:
+<span id="L908" class="LineNr"> 908 </span>      function&lt;_Res(_ArgTypes...)&gt;::
+<span id="L909" class="LineNr"> 909 </span>  400e12: 55                    push   rbp
+<span id="L910" class="LineNr"> 910 </span>  400e13: 48 89 e5              mov    rbp,rsp
+<span id="L911" class="LineNr"> 911 </span>  400e16: 53                    push   rbx
+<span id="L912" class="LineNr"> 912 </span>  400e17: 48 83 ec 18           sub    rsp,0x18
+<span id="L913" class="LineNr"> 913 </span>  400e1b: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
+<span id="L914" class="LineNr"> 914 </span>  400e1f: 48 89 75 e0           mov    QWORD PTR [rbp-0x20],rsi
+ ...
+<span id="L928" class="LineNr"> 928 </span>      _My_handler::_M_init_functor(_M_functor, std::move(__f));
+<span id="L929" class="LineNr"> 929 </span>  400e4b: 48 8d 45 e0           lea    rax,[rbp-0x20]
+<span id="L930" class="LineNr"> 930 </span>  400e4f: 48 89 c7              mov    rdi,rax
+<span class="String">####                                        rdi -&gt; rax</span>
+<span id="L931" class="LineNr"> 931 </span>  400e52: e8 ac ff ff ff        call   400e03 &lt;std::remove_reference&lt;int (*&amp;)(int)&gt;::type&amp;&amp; std::move&lt;int (*&amp;)(int)&gt;(int (*&amp;)(int))&gt;
+<span id="L932" class="LineNr"> 932 </span>  400e57: 48 89 c2              mov    rdx,rax
+<span id="L933" class="LineNr"> 933 </span>  400e5a: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+<span id="L934" class="LineNr"> 934 </span>  400e5e: 48 89 d6              mov    rsi,rdx
+<span id="L935" class="LineNr"> 935 </span>  400e61: 48 89 c7              mov    rdi,rax
+<span id="L936" class="LineNr"> 936 </span>  400e64: e8 ef 00 00 00        call   400f58 &lt;std::_Function_base::_Base_manager&lt;int (*)(int)&gt;::_M_init_functor(std::_Any_data&amp;, int (*&amp;&amp;)(int))&gt;
+</pre></p>
+
+<p>First, note that <code>this</code> and the address of <code>function</code> are placed on the stack at
+<code>rbp-0x18</code> and <code>rbp-0x20</code>, respectively.</p>
+
+<p>
+Lines 929 and 930 put a pointer to the pointer to <code>function</code> in <code>rdi</code>.
+<code>std::remove_reference</code> (called on line 931) has the effect of moving <code>rdi</code> to <code>rax</code> (it does some
+<a href="http://www.cplusplus.com/reference/type_traits/remove_reference/">type-level manipulation</a> too, but
+that doesn't appear in the assembly).
+That pointer (holding the value <code>rbp-0x20</code>) makes its way to <code>rsi</code> via lines 932 and 934.
+</p>
+
+<p>
+Line 935 puts <code>this</code> into <code>rdi</code>; line 936 calls the handler's init function.
+That init function exists only to perform some
+<a href="https://en.wikipedia.org/wiki/Substitution_failure_is_not_an_error">template metaprogramming</a> which results
+in a call to the real init function at <code>0x4011aa</code> with the same parameters.
+Let's see what happens in there:
+</p>
+
+<p><pre>
+<span id="L1290" class="LineNr">1290 </span>00000000004011aa &lt;std::_Function_base::_Base_manager&lt;int (*)(int)&gt;::_M_init_functor(std::_Any_data&amp;, int (*&amp;&amp;)(int), std::integral_constant&lt;bool, true&gt;)&gt;:
+<span id="L1291" class="LineNr">1291 </span>  _M_init_functor(_Any_data&amp; __functor, _Functor&amp;&amp; __f, true_type)
+<span id="L1292" class="LineNr">1292 </span>  4011aa: 55                    push   rbp
+<span id="L1293" class="LineNr">1293 </span>  4011ab: 48 89 e5              mov    rbp,rsp
+<span id="L1294" class="LineNr">1294 </span>  4011ae: 53                    push   rbx
+<span id="L1295" class="LineNr">1295 </span>  4011af: 48 83 ec 18           sub    rsp,0x18
+<span id="L1296" class="LineNr">1296 </span>  4011b3: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
+<span id="L1297" class="LineNr">1297 </span>  4011b7: 48 89 75 e0           mov    QWORD PTR [rbp-0x20],rsi
+<span id="L1298" class="LineNr">1298 </span>  { new (__functor._M_access()) _Functor(std::move(__f)); }
+<span id="L1299" class="LineNr">1299 </span>  4011bb: 48 8b 45 e0           mov    rax,QWORD PTR [rbp-0x20]
+<span id="L1300" class="LineNr">1300 </span>  4011bf: 48 89 c7              mov    rdi,rax
+<span id="L1301" class="LineNr">1301 </span>  4011c2: e8 3c fc ff ff        call   400e03 &lt;std::remove_reference&lt;int (*&amp;)(int)&gt;::type&amp;&amp; std::move&lt;int (*&amp;)(int)&gt;(int (*&amp;)(int))&gt;
+<span class="String">####                                        rdi -&gt; rax</span>
+<span id="L1302" class="LineNr">1302 </span>  4011c7: 48 8b 18              mov    rbx,QWORD PTR [rax]
+<span id="L1303" class="LineNr">1303 </span>  4011ca: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+<span id="L1304" class="LineNr">1304 </span>  4011ce: 48 89 c7              mov    rdi,rax
+<span class="String">####                                        rdi -&gt; rax</span>
+<span id="L1305" class="LineNr">1305 </span>  4011d1: e8 a0 fa ff ff        call   400c76 &lt;std::_Any_data::_M_access()&gt;
+<span id="L1306" class="LineNr">1306 </span>  4011d6: 48 89 c6              mov    rsi,rax
+<span id="L1307" class="LineNr">1307 </span>  4011d9: bf 08 00 00 00        mov    edi,0x8
+<span class="String">####                                        rsi -&gt; rax</span>
+<span id="L1308" class="LineNr">1308 </span>  4011de: e8 81 fa ff ff        call   400c64 &lt;operator new(unsigned long, void*)&gt;
+<span id="L1309" class="LineNr">1309 </span>  4011e3: 48 85 c0              test   rax,rax
+<span id="L1310" class="LineNr">1310 </span>  4011e6: 74 03                 je     4011eb &lt;std::_Function_base::_Base_manager&lt;int (*)(int)&gt;::_M_init_functor(std::_Any_data&amp;, int (*&amp;&amp;)(int), std::integral_constant&lt;bool, true&gt;)+0x41&gt;
+<span id="L1311" class="LineNr">1311 </span>  4011e8: 48 89 18              mov    QWORD PTR [rax],rbx
+<span id="L1312" class="LineNr">1312 </span>  4011eb: 90                    nop
+<span id="L1313" class="LineNr">1313 </span>  4011ec: 48 83 c4 18           add    rsp,0x18
+<span id="L1314" class="LineNr">1314 </span>  4011f0: 5b                    pop    rbx
+<span id="L1315" class="LineNr">1315 </span>  4011f1: 5d                    pop    rbp
+<span id="L1316" class="LineNr">1316 </span>  4011f2: c3                    ret
+</pre></p>
+
+<p>
+<ol>
+	<li>The pointer to the pointer to <code>function</code> is dereferenced and placed in <code>rbx</code> via lines 1297 and 1299&ndash;1302.</li>
+	<li><code>this</code> is placed in <code>rax</code> via lines 1296 and 1303&ndash;1307.</li>
+	<li>The pointer to <code>function</code> is stored in <code>*this</code> on line 1311.</li>
+</ol>
+So, the net result is that the 'first' thing in our <code>std::function</code> object is a pointer to the function we want to call.
+This finishes up the call to initialize <code>_My_handler</code>.
+</p>
+
+<p>
+The constructor for <code>std::function</code> does one other important thing: it sets up a couple vtable entries.
+</p>
+
+<p><pre>
+<span id="L937" class="LineNr"> 937 </span>      _M_invoker = &amp;_My_handler::_M_invoke;
+<span id="L938" class="LineNr"> 938 </span>  400e69: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+<span id="L939" class="LineNr"> 939 </span>  400e6d: 48 c7 40 18 97 0f 40  mov    QWORD PTR [rax+0x18],0x400f97
+<span id="L940" class="LineNr"> 940 </span>  400e74: 00
+<span id="L941" class="LineNr"> 941 </span>      _M_manager = &amp;_My_handler::_M_manager;
+<span id="L942" class="LineNr"> 942 </span>  400e75: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+<span id="L943" class="LineNr"> 943 </span>  400e79: 48 c7 40 10 d0 0f 40  mov    QWORD PTR [rax+0x10],0x400fd0
+<span id="L944" class="LineNr"> 944 </span>  400e80: 00
+<span id="L945" class="LineNr"> 945 </span>      }
+</pre></p>
+
+<p>The vtable entries are created by storing function addresses in the object we're constructing.
+What's important to note here is that <code>this+0x18</code> holds the address of <code>_M_invoke</code>, <code>0x400f97</code>.
+We'll need to know this when analyzing <code>std::function::operator()</code>.
+</p>
+
+<h5>Calling <code>function_caller</code></h5>
+<p>
+Back in <code>main()</code>, we see that a pointer to the <code>std::function</code> object is passed in <code>rdi</code>, and <code>arg</code>'s value,
+5, is passed in <code>esi</code>:</p>
+<p><pre>
+<span id="L220" class="LineNr"> 220 </span>  40084a: 48 8d 45 80           lea    rax,[rbp-0x80]
+<span id="L221" class="LineNr"> 221 </span>  40084e: be 05 00 00 00        mov    esi,0x5
+<span id="L222" class="LineNr"> 222 </span>  400853: 48 89 c7              mov    rdi,rax
+<span id="L223" class="LineNr"> 223 </span>  400856: e8 2a ff ff ff        call   400785 &lt;function_caller(std::function&lt;int (int)&gt;, int)&gt;
+</pre></p>
+
+<p><code>function_caller</code> just calls <code>std::function::operator()</code> with the same arguments in the same registers:</p>
+<p><pre>
+<span id="L138" class="LineNr"> 138 </span>0000000000400785 &lt;function_caller(std::function&lt;int (int)&gt;, int)&gt;:
+<span id="L144" class="LineNr"> 144 </span>int function_caller(std::function&lt;int(int)&gt; f, int arg) {
+<span id="L145" class="LineNr"> 145 </span>  400785: 55                    push   rbp
+<span id="L146" class="LineNr"> 146 </span>  400786: 48 89 e5              mov    rbp,rsp
+<span id="L147" class="LineNr"> 147 </span>  400789: 48 83 ec 10           sub    rsp,0x10
+<span id="L148" class="LineNr"> 148 </span>  40078d: 48 89 7d f8           mov    QWORD PTR [rbp-0x8],rdi
+<span id="L149" class="LineNr"> 149 </span>  400791: 89 75 f4              mov    DWORD PTR [rbp-0xc],esi
+<span id="L150" class="LineNr"> 150 </span>  return f(arg);
+<span id="L151" class="LineNr"> 151 </span>  400794: 8b 55 f4              mov    edx,DWORD PTR [rbp-0xc]
+<span id="L152" class="LineNr"> 152 </span>  400797: 48 8b 45 f8           mov    rax,QWORD PTR [rbp-0x8]
+<span id="L153" class="LineNr"> 153 </span>  40079b: 89 d6                 mov    esi,edx
+<span id="L154" class="LineNr"> 154 </span>  40079d: 48 89 c7              mov    rdi,rax
+<span id="L155" class="LineNr"> 155 </span>  4007a0: e8 a9 05 00 00        call   400d4e &lt;std::function&lt;int (int)&gt;::operator()(int) const&gt;
+<span id="L156" class="LineNr"> 156 </span>}
+<span id="L157" class="LineNr"> 157 </span>  4007a5: c9                    leave
+<span id="L158" class="LineNr"> 158 </span>  4007a6: c3                    ret
+</pre></p>
+
+<p>The indirection fun starts in <code>std::function::operator()</code>:</p>
+<p><pre>
+<span id="L796" class="LineNr"> 796 </span>0000000000400d4e &lt;std::function&lt;int (int)&gt;::operator()(int) const&gt;:
+<span id="L801" class="LineNr"> 801 </span>  400d4e: 55                    push   rbp
+<span id="L802" class="LineNr"> 802 </span>  400d4f: 48 89 e5              mov    rbp,rsp
+<span id="L803" class="LineNr"> 803 </span>  400d52: 53                    push   rbx
+<span id="L804" class="LineNr"> 804 </span>  400d53: 48 83 ec 18           sub    rsp,0x18
+<span id="L805" class="LineNr"> 805 </span>  400d57: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
+<span id="L806" class="LineNr"> 806 </span>  400d5b: 89 75 e4              mov    DWORD PTR [rbp-0x1c],esi
+...
+<span id="L818" class="LineNr"> 818 </span>  400d73: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+<span id="L819" class="LineNr"> 819 </span>  400d77: 48 8b 58 18           mov    rbx,QWORD PTR [rax+0x18]
+<span id="L820" class="LineNr"> 820 </span>  400d7b: 48 8d 45 e4           lea    rax,[rbp-0x1c]
+<span id="L821" class="LineNr"> 821 </span>  400d7f: 48 89 c7              mov    rdi,rax
+<span class="String">####                                        rdi -&gt; rax</span>
+<span id="L822" class="LineNr"> 822 </span>  400d82: e8 b8 ff ff ff        call   400d3f &lt;int&amp;&amp; std::forward&lt;int&gt;(std::remove_reference&lt;int&gt;::type&amp;)&gt;
+<span id="L823" class="LineNr"> 823 </span>  400d87: 48 89 c2              mov    rdx,rax
+<span id="L824" class="LineNr"> 824 </span>  400d8a: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+<span id="L825" class="LineNr"> 825 </span>  400d8e: 48 89 d6              mov    rsi,rdx
+<span id="L826" class="LineNr"> 826 </span>  400d91: 48 89 c7              mov    rdi,rax
+<span id="L827" class="LineNr"> 827 </span>  400d94: ff d3                 call   rbx
+<span id="L828" class="LineNr"> 828 </span>    }
+<span id="L829" class="LineNr"> 829 </span>  400d96: 48 83 c4 18           add    rsp,0x18
+<span id="L830" class="LineNr"> 830 </span>  400d9a: 5b                    pop    rbx
+<span id="L831" class="LineNr"> 831 </span>  400d9b: 5d                    pop    rbp
+<span id="L832" class="LineNr"> 832 </span>  400d9c: c3                    ret
+</pre></p>
+
+<p>
+<ol>
+	<li>The vtable entry for <code>_M_invoke</code> (<code>0x400f97</code>) is loaded into <code>rbx</code> by lines 805, 818, and 819.</li>
+	<li>A pointer to <code>arg</code> is placed in <code>rsi</code> via lines 806, 820&ndash;823, and 825.</li>
+	<li><code>this</code> is stored in <code>rdi</code> via lines 805, 824, and 826.</li>
+	<li><code>_M_invoke</code>'s vtable entry is called on line 827.</li>
+</ol>
+</p>
+
+<p><pre>
+<span id="L1064" class="LineNr">1064 </span>0000000000400f97 &lt;std::_Function_handler&lt;int (int), int (*)(int)&gt;::_M_invoke(std::_Any_data const&amp;, int&amp;&amp;)&gt;:
+<span id="L1065" class="LineNr">1065 </span>      _M_invoke(const _Any_data&amp; __functor, _ArgTypes&amp;&amp;... __args)
+<span id="L1066" class="LineNr">1066 </span>  400f97: 55                    push   rbp
+<span id="L1067" class="LineNr">1067 </span>  400f98: 48 89 e5              mov    rbp,rsp
+<span id="L1068" class="LineNr">1068 </span>  400f9b: 53                    push   rbx
+<span id="L1069" class="LineNr">1069 </span>  400f9c: 48 83 ec 18           sub    rsp,0x18
+<span id="L1070" class="LineNr">1070 </span>  400fa0: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
+<span id="L1071" class="LineNr">1071 </span>  400fa4: 48 89 75 e0           mov    QWORD PTR [rbp-0x20],rsi
+<span id="L1072" class="LineNr">1072 </span>  return (*_Base::_M_get_pointer(__functor))(
+<span id="L1073" class="LineNr">1073 </span>  400fa8: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+<span id="L1074" class="LineNr">1074 </span>  400fac: 48 89 c7              mov    rdi,rax
+<span class="String">####                                        rdi -&gt; rax (via 4 function calls!)</span>
+<span id="L1075" class="LineNr">1075 </span>  400faf: e8 3f 02 00 00        call   4011f3 &lt;std::_Function_base::_Base_manager&lt;int (*)(int)&gt;::_M_get_pointer(std::_Any_data const&amp;)&gt;
+<span id="L1076" class="LineNr">1076 </span>  400fb4: 48 8b 18              mov    rbx,QWORD PTR [rax]
+<span id="L1077" class="LineNr">1077 </span>      std::forward&lt;_ArgTypes&gt;(__args)...);
+<span id="L1078" class="LineNr">1078 </span>  400fb7: 48 8b 45 e0           mov    rax,QWORD PTR [rbp-0x20]
+<span id="L1079" class="LineNr">1079 </span>  400fbb: 48 89 c7              mov    rdi,rax
+<span class="String">####                                        rdi -&gt; rax</span>
+<span id="L1080" class="LineNr">1080 </span>  400fbe: e8 7c fd ff ff        call   400d3f &lt;int&amp;&amp; std::forward&lt;int&gt;(std::remove_reference&lt;int&gt;::type&amp;)&gt;
+<span id="L1081" class="LineNr">1081 </span>  return (*_Base::_M_get_pointer(__functor))(
+<span id="L1082" class="LineNr">1082 </span>  400fc3: 8b 00                 mov    eax,DWORD PTR [rax]
+<span id="L1083" class="LineNr">1083 </span>      std::forward&lt;_ArgTypes&gt;(__args)...);
+<span id="L1084" class="LineNr">1084 </span>  400fc5: 89 c7                 mov    edi,eax
+<span id="L1085" class="LineNr">1085 </span>  400fc7: ff d3                 call   rbx
+<span id="L1086" class="LineNr">1086 </span>      }
+<span id="L1087" class="LineNr">1087 </span>  400fc9: 48 83 c4 18           add    rsp,0x18
+<span id="L1088" class="LineNr">1088 </span>  400fcd: 5b                    pop    rbx
+<span id="L1089" class="LineNr">1089 </span>  400fce: 5d                    pop    rbp
+<span id="L1090" class="LineNr">1090 </span>  400fcf: c3                    ret
+</pre></p>
+
+<p>
+<ol>
+	<li>The pointer to <code>function</code> stored in <code>this</code> is moved to <code>rbx</code> by lines 1070 and 1073&ndash;1076.</li>
+	<li>The pointer to <code>arg</code> is moved to <code>rax</code> by lines 1071 and 1078&ndash;1080.</li>
+	<li><code>arg</code> is fetched from the pointer and placed in <code>edi</code> by lines 1082 and 1084.</li>
+	<li>Finally, <code>function</code> is called on line 1085.</li>
+</ol>
+</p>
+
+<h5>Summary:</h5>
+<p>When wrapping a function pointer, <code>std::function</code> is implemented as a virtual class whose <code>operator()</code>
+calls a virtual function on a handler class that then calls the wrapped function pointer. Constructing this object requires storing
+both the function pointer and a couple vtable entries.</p>
+
+
+<h4>Functor or Lambda:</h4>
+<p>We will study how the behavior of <code>std::function</code> changes when created from a functor or lambda, rather than a function pointer.
+Unsurprisingly, the code generated is functionally equivalent for functors and lambdas.
+The code shown is for a <code>Functor</code> instance.
+</p>
+
+<h5>Constructor:</h5>
+<p><pre>
+<span id="L228" class="LineNr"> 228 </span>  y = function_caller(functor, 5);
+<span id="L229" class="LineNr"> 229 </span>  40086d: 8b 95 70 ff ff ff     mov    edx,DWORD PTR [rbp-0x90]
+<span id="L230" class="LineNr"> 230 </span>  400873: 48 8d 45 a0           lea    rax,[rbp-0x60]
+<span id="L231" class="LineNr"> 231 </span>  400877: 89 d6                 mov    esi,edx
+<span id="L232" class="LineNr"> 232 </span>  400879: 48 89 c7              mov    rdi,rax
+<span id="L233" class="LineNr"> 233 </span>  40087c: e8 33 06 00 00        call   400eb4 &lt;std::function&lt;int (int)&gt;::function&lt;Functor, void, void&gt;(Functor)&gt;
+</pre></p>
+
+<p>As before, <code>this</code> is passed in <code>rdi</code>. Our <code>functor</code> object, being one <code>int</code>, is passed in <code>esi</code>.</p>
+
+<p><pre>
+<span id="L973" class="LineNr"> 973 </span>0000000000400eb4 &lt;std::function&lt;int (int)&gt;::function&lt;Functor, void, void&gt;(Functor)&gt;:
+<span id="L974" class="LineNr"> 974 </span>      function&lt;_Res(_ArgTypes...)&gt;::
+<span id="L975" class="LineNr"> 975 </span>  400eb4: 55                    push   rbp
+<span id="L976" class="LineNr"> 976 </span>  400eb5: 48 89 e5              mov    rbp,rsp
+<span id="L977" class="LineNr"> 977 </span>  400eb8: 53                    push   rbx
+<span id="L978" class="LineNr"> 978 </span>  400eb9: 48 83 ec 18           sub    rsp,0x18
+<span id="L979" class="LineNr"> 979 </span>  400ebd: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
+<span id="L980" class="LineNr"> 980 </span>  400ec1: 89 75 e0              mov    DWORD PTR [rbp-0x20],esi
+ ...
+<span id="L994" class="LineNr"> 994 </span>      _My_handler::_M_init_functor(_M_functor, std::move(__f));
+<span id="L995" class="LineNr"> 995 </span>  400eec: 48 8d 45 e0           lea    rax,[rbp-0x20]
+<span id="L996" class="LineNr"> 996 </span>  400ef0: 48 89 c7              mov    rdi,rax
+<span class="String">####                                        rdi -&gt; rax</span>
+<span id="L997" class="LineNr"> 997 </span>  400ef3: e8 ad ff ff ff        call   400ea5 &lt;std::remove_reference&lt;Functor&amp;&gt;::type&amp;&amp; std::move&lt;Functor&amp;&gt;(Functor&amp;)&gt;
+<span id="L998" class="LineNr"> 998 </span>  400ef8: 48 89 c2              mov    rdx,rax
+<span id="L999" class="LineNr"> 999 </span>  400efb: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+<span id="L1000" class="LineNr">1000 </span>  400eff: 48 89 d6              mov    rsi,rdx
+<span id="L1001" class="LineNr">1001 </span>  400f02: 48 89 c7              mov    rdi,rax
+<span id="L1002" class="LineNr">1002 </span>  400f05: e8 7d 01 00 00        call   401087 &lt;std::_Function_base::_Base_manager&lt;Functor&gt;::_M_init_functor(std::_Any_data&amp;, Functor&amp;&amp;)&gt;
+</pre></p>
+
+<p>
+<ol>
+	<li>A pointer to <code>functor</code> is placed in <code>rsi</code> via lines 980, 995&ndash;998, and 1000.</li>
+	<li><code>this</code> is placed in <code>rdi</code>, as usual, by 999 and 1001.</li>
+	<li>Then, we call the handler's init function on 1002, which again forwards the call to the true handler init.</li>
+</ol>
+</p>
+
+<p><pre>
+<span id="L1409" class="LineNr">1409 </span>00000000004012b6 &lt;std::_Function_base::_Base_manager&lt;Functor&gt;::_M_init_functor(std::_Any_data&amp;, Functor&amp;&amp;, std::integral_constant&lt;bool, true&gt;)&gt;:
+<span id="L1410" class="LineNr">1410 </span>  _M_init_functor(_Any_data&amp; __functor, _Functor&amp;&amp; __f, true_type)
+<span id="L1411" class="LineNr">1411 </span>  4012b6: 55                    push   rbp
+<span id="L1412" class="LineNr">1412 </span>  4012b7: 48 89 e5              mov    rbp,rsp
+<span id="L1413" class="LineNr">1413 </span>  4012ba: 53                    push   rbx
+<span id="L1414" class="LineNr">1414 </span>  4012bb: 48 83 ec 18           sub    rsp,0x18
+<span id="L1415" class="LineNr">1415 </span>  4012bf: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
+<span id="L1416" class="LineNr">1416 </span>  4012c3: 48 89 75 e0           mov    QWORD PTR [rbp-0x20],rsi
+<span id="L1417" class="LineNr">1417 </span>  { new (__functor._M_access()) _Functor(std::move(__f)); }
+<span id="L1418" class="LineNr">1418 </span>  4012c7: 48 8b 45 e0           mov    rax,QWORD PTR [rbp-0x20]
+<span id="L1419" class="LineNr">1419 </span>  4012cb: 48 89 c7              mov    rdi,rax
+<span class="String">####                                        rdi -&gt; rax</span>
+<span id="L1420" class="LineNr">1420 </span>  4012ce: e8 d2 fb ff ff        call   400ea5 &lt;std::remove_reference&lt;Functor&amp;&gt;::type&amp;&amp; std::move&lt;Functor&amp;&gt;(Functor&amp;)&gt;
+<span id="L1421" class="LineNr">1421 </span>  4012d3: 48 89 c3              mov    rbx,rax
+<span id="L1422" class="LineNr">1422 </span>  4012d6: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+<span id="L1423" class="LineNr">1423 </span>  4012da: 48 89 c7              mov    rdi,rax
+<span class="String">####                                        rdi -&gt; rax</span>
+<span id="L1424" class="LineNr">1424 </span>  4012dd: e8 94 f9 ff ff        call   400c76 &lt;std::_Any_data::_M_access()&gt;
+<span id="L1425" class="LineNr">1425 </span>  4012e2: 48 89 c6              mov    rsi,rax
+<span id="L1426" class="LineNr">1426 </span>  4012e5: bf 04 00 00 00        mov    edi,0x4
+<span class="String">####                                        rsi -&gt; rax</span>
+<span id="L1427" class="LineNr">1427 </span>  4012ea: e8 75 f9 ff ff        call   400c64 &lt;operator new(unsigned long, void*)&gt;
+<span id="L1428" class="LineNr">1428 </span>  4012ef: 48 85 c0              test   rax,rax
+<span id="L1429" class="LineNr">1429 </span>  4012f2: 74 04                 je     4012f8 &lt;std::_Function_base::_Base_manager&lt;Functor&gt;::_M_init_functor(std::_Any_data&amp;, Functor&amp;&amp;, std::integral_constant&lt;bool, true&gt;)+0x42&gt;
+<span id="L1430" class="LineNr">1430 </span>  4012f4: 8b 13                 mov    edx,DWORD PTR [rbx]
+<span id="L1431" class="LineNr">1431 </span>  4012f6: 89 10                 mov    DWORD PTR [rax],edx
+<span id="L1432" class="LineNr">1432 </span>  4012f8: 90                    nop
+<span id="L1433" class="LineNr">1433 </span>  4012f9: 48 83 c4 18           add    rsp,0x18
+<span id="L1434" class="LineNr">1434 </span>  4012fd: 5b                    pop    rbx
+<span id="L1435" class="LineNr">1435 </span>  4012fe: 5d                    pop    rbp
+<span id="L1436" class="LineNr">1436 </span>  4012ff: c3                    ret
+</pre></p>
+
+<p>
+<ol>
+	<li>The pointer to <code>functor</code> is placed in <code>rbx</code>, via lines 1416 and 1418&ndash;1421.</li>
+	<li><code>this</code> is copied to <code>rax</code> by lines 1415 and 1422&ndash;1427.</li>
+	<li>Finally, the pointer to <code>functor</code> is dereferenced and <code>functor</code> is copied into the <code>std::function</code> object
+		by lines 1430 and 1431.</li>
+</ol>
+</p>
+
+<p>Back in the constructor for <code>std::function</code>, the vtable is set up:</p>
+<p><pre>
+<span id="L1003" class="LineNr">1003 </span>      _M_invoker = &amp;_My_handler::_M_invoke;
+<span id="L1004" class="LineNr">1004 </span>  400f0a: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+<span id="L1005" class="LineNr">1005 </span>  400f0e: 48 c7 40 18 c6 10 40  mov    QWORD PTR [rax+0x18],0x4010c6
+<span id="L1006" class="LineNr">1006 </span>  400f15: 00
+<span id="L1007" class="LineNr">1007 </span>      _M_manager = &amp;_My_handler::_M_manager;
+<span id="L1008" class="LineNr">1008 </span>  400f16: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+<span id="L1009" class="LineNr">1009 </span>  400f1a: 48 c7 40 10 02 11 40  mov    QWORD PTR [rax+0x10],0x401102
+<span id="L1010" class="LineNr">1010 </span>  400f21: 00
+<span id="L1011" class="LineNr">1011 </span>      }
+</pre></p>
+
+<p>Note that this time we have a different invoke function, <code>0x4010c6</code>.</p>
+
+
+
+<h5>Call:</h5>
+
+<p>The call to <code>function_caller</code> is the same as with the function pointer (as it should be&mdash;this is the entire point
+of <code>std::function</code>).
+<ol>
+	<li>The pointer to the <code>std::function</code> object is passed in <code>rdi</code> and <code>arg</code>
+		is passed in <code>esi</code>.</li>
+	<li><code>std::function::operator()</code> places a copy of <code>arg</code> on its stack frame, then passes
+		a pointer to that in <code>rsi</code> to <code>_M_invoke</code> (along with <code>this</code> in <code>rdi</code>).</li>
+</ol>
+</p>
+
+<p><pre>
+<span id="L1195" class="LineNr">1195 </span>00000000004010c6 &lt;std::_Function_handler&lt;int (int), Functor&gt;::_M_invoke(std::_Any_data const&amp;, int&amp;&amp;)&gt;:
+<span id="L1196" class="LineNr">1196 </span>      _M_invoke(const _Any_data&amp; __functor, _ArgTypes&amp;&amp;... __args)
+<span id="L1197" class="LineNr">1197 </span>  4010c6: 55                    push   rbp
+<span id="L1198" class="LineNr">1198 </span>  4010c7: 48 89 e5              mov    rbp,rsp
+<span id="L1199" class="LineNr">1199 </span>  4010ca: 53                    push   rbx
+<span id="L1200" class="LineNr">1200 </span>  4010cb: 48 83 ec 18           sub    rsp,0x18
+<span id="L1201" class="LineNr">1201 </span>  4010cf: 48 89 7d e8           mov    QWORD PTR [rbp-0x18],rdi
+<span id="L1202" class="LineNr">1202 </span>  4010d3: 48 89 75 e0           mov    QWORD PTR [rbp-0x20],rsi
+<span id="L1203" class="LineNr">1203 </span>      std::forward&lt;_ArgTypes&gt;(__args)...);
+<span id="L1204" class="LineNr">1204 </span>  4010d7: 48 8b 45 e0           mov    rax,QWORD PTR [rbp-0x20]
+<span id="L1205" class="LineNr">1205 </span>  4010db: 48 89 c7              mov    rdi,rax
+<span class="String">####                                        rdi -&gt; rax</span>
+<span id="L1206" class="LineNr">1206 </span>  4010de: e8 5c fc ff ff        call   400d3f &lt;int&amp;&amp; std::forward&lt;int&gt;(std::remove_reference&lt;int&gt;::type&amp;)&gt;
+<span id="L1207" class="LineNr">1207 </span>  return (*_Base::_M_get_pointer(__functor))(
+<span id="L1208" class="LineNr">1208 </span>  4010e3: 8b 18                 mov    ebx,DWORD PTR [rax]
+<span id="L1209" class="LineNr">1209 </span>  4010e5: 48 8b 45 e8           mov    rax,QWORD PTR [rbp-0x18]
+<span id="L1210" class="LineNr">1210 </span>  4010e9: 48 89 c7              mov    rdi,rax
+<span class="String">####                                        rdi -&gt; rax (via 4 function calls!)</span>
+<span id="L1211" class="LineNr">1211 </span>  4010ec: e8 0f 02 00 00        call   401300 &lt;std::_Function_base::_Base_manager&lt;Functor&gt;::_M_get_pointer(std::_Any_data const&amp;)&gt;
+<span id="L1212" class="LineNr">1212 </span>      std::forward&lt;_ArgTypes&gt;(__args)...);
+<span id="L1213" class="LineNr">1213 </span>  4010f1: 89 de                 mov    esi,ebx
+<span id="L1214" class="LineNr">1214 </span>  4010f3: 48 89 c7              mov    rdi,rax
+<span id="L1215" class="LineNr">1215 </span>  4010f6: e8 15 fc ff ff        call   400d10 &lt;Functor::operator()(int)&gt;
+<span id="L1216" class="LineNr">1216 </span>      }
+<span id="L1217" class="LineNr">1217 </span>  4010fb: 48 83 c4 18           add    rsp,0x18
+<span id="L1218" class="LineNr">1218 </span>  4010ff: 5b                    pop    rbx
+<span id="L1219" class="LineNr">1219 </span>  401100: 5d                    pop    rbp
+<span id="L1220" class="LineNr">1220 </span>  401101: c3                    ret
+</pre></p>
+<p>This invocation function differs from the invoker for a function pointer in two ways.
+First, we need to manage both the <code>functor</code> object as well as the argument being passed to <code>Functor::operator()</code>.
+Second, we haven't saved the address of <code>Functor::operator()</code> anywhere, so we will need to directly call it.
+<ol>
+	<li>The <code>this</code> pointer for the functor object is placed in <code>rdi</code> via lines 1201, 1209&ndash;1211, and 1214.
+		Notice that since the functor object is the first thing in the <code>std::function</code> object, the same <code>this</code> pointer
+		is used for both.</li>
+	<li>The <code>arg</code> pointer is dereferenced and its value placed in <code>esi</code> via lines 1202, 1204&ndash;1208, and 1213.</li>
+	<li><code>Functor::operator()</code> is called directly on line 1215.
+</ol>
+</p>
+
+<h5>Summary:</h5>
+<p>The <code>std::function</code> object for a functor object or lambda consists of a copy of the functor/lambda object and a vtable,
+which contains a pointer to an invocation function. The invocation function, unlike that for a function pointer, has hard-coded the
+address of the functor or lambda's <code>operator()</code>.
+Thus, each functor class and lambda requires a corresponding handler class and invocation function when boxed with <code>std::function</code>.
+</p>
+
+<h4>Summary:</h4>
+<p><code>std::function</code> provides a uniform 'box' for passing around and calling any sort of callable object.
+This allows developers to write code without using templates or restricting the sort of callable things that can be passed to functions.
+<code>std::function</code> acheives this uniformity by performing dynamic function dispatch using virtual functions.
+When a <code>std::function</code> object is created, it contains either a function pointer or a functor/lambda objec, as well as
+a vtable with a pointer to an invocation function that knows how to call the callable thing inside the <code>std::function</code> object.
+</p>
+
+<p>As with the template type deduction approach, the invocation function is specialized to either a function pointer of a given type
+or to a specific functor class or lambda. While every function pointer of the same type can share one invocation function, the invocation
+function for functor classes and lambdas must have hard-coded the address of the appropriate <code>operator()</code> to call and thus cannot
+be reused between functor classes or lambdas.</p>
+
+<p>The process for dynamically dispatching the function call is as follows:
+<ol>
+	<li>Call <code>std::function::operator()</code>.</li>
+	<li>Fetch and call the virtual invocation function.</li>
+	<li>Call the appropriate function (via pointer) or <code>operator()</code> (directly).</li>
+</ol>
+</p>
+
+<p>Template metaprogramming functions are scattered throughout the code for <code>std::function</code>.
+It would be reasonable to be concerned about the additional overhead from these (effectively) no-op functions, but enabling <code>-O1</code>
+or <code>-Og</code> eliminate all this code.
+</p>
+
+<h3>Design Takeaways</h3>
+<p>Both approaches to passing callable things to functions require one template instance per functor class or lambda object.
+In the case of directly using template type deduction, the function taking a callable as a parameter is specialized; in the case
+of boxing the callable in <code>std::function</code>, the handler class is specialized. As such, neither approach clearly offers
+smaller code size.</p>
+
+<p>However, <code>std::function</code> definitely incurs one vtable lookup and function dispatch that cannot be eliminated, even
+by an optimizer. As a result of this, <code>std::function</code> will always incur some function call overhead, and it will require
+memory overhead (at least two pointers, or 16 bytes on a 64-bit system) for storing the vtable.
+By comparison, directly using template type deduction and passing a lambda or functor class produces assembly that is much easier
+to optimize. It is common for the lambda/functor's <code>operator()</code> to be inlined into the template instance. This is possible
+since the template instance directly calls it, as opposed to calling via a pointer as would be the case for a virtual function
+dispatch or a function pointer. Furthermore, in the case that the function being passed a callable is small, the template instantiation
+may itself be inlined into the call site, resulting in a net reduction of two function calls.
+</p>
+
+<p>Therefore, we recommend that <code>std::function</code> be used only when dynamic dispatch is strictly necessary.
+Using template type deduction for functions that take a callable thing allows the caller of that function to choose whether they
+want static or dynamic dispatch, since they can always just pass a <code>std::function</code> to the templated function.
+For an example of how this would work as a member function of a templated class, consider the following simplified Vector implementation:
+</p>
+
+<p><pre>
+<span id="L1" class="LineNr"> 1 </span><span class="PreProc">#include</span><span class="String">&lt;vector&gt;</span>
+<span id="L2" class="LineNr"> 2 </span><span class="PreProc">#include</span><span class="String">&lt;iostream&gt;</span>
+<span id="L3" class="LineNr"> 3 </span>
+<span id="L4" class="LineNr"> 4 </span><span class="Type">template</span>&lt;<span class="Type">class</span> Item&gt;
+<span id="L5" class="LineNr"> 5 </span><span class="Type">class</span> Vector {
+<span id="L6" class="LineNr"> 6 </span>  <span class="Statement">public</span>:
+<span id="L7" class="LineNr"> 7 </span>    Vector(<span class="Type">const</span> <span class="Type">unsigned</span> <span class="Type">int</span> size) : v(size) {}
+<span id="L8" class="LineNr"> 8 </span>
+<span id="L9" class="LineNr"> 9 </span>    <span class="Type">unsigned</span> <span class="Type">int</span> size() { <span class="Statement">return</span> v.size(); }
+<span id="L10" class="LineNr">10 </span>
+<span id="L11" class="LineNr">11 </span>    Item&amp; <span class="Operator">operator</span>[](<span class="Type">const</span> <span class="Type">unsigned</span> <span class="Type">int</span> idx) {
+<span id="L12" class="LineNr">12 </span>      <span class="Statement">return</span> v[idx];
+<span id="L13" class="LineNr">13 </span>    }
+<span id="L14" class="LineNr">14 </span>
+<span id="L15" class="LineNr">15 </span>    <span class="Type">template</span>&lt;<span class="Type">class</span> Func&gt;
+<span id="L16" class="LineNr">16 </span>    Vector map(Func f) {
+<span id="L17" class="LineNr">17 </span>      Vector ret(size());
+<span id="L18" class="LineNr">18 </span>
+<span id="L19" class="LineNr">19 </span>      <span class="Statement">for</span>(<span class="Type">unsigned</span> <span class="Type">int</span> i = <span class="Constant">0</span>; i &lt; size(); i++) {
+<span id="L20" class="LineNr">20 </span>        ret[i] = f(v[i]);
+<span id="L21" class="LineNr">21 </span>      }
+<span id="L22" class="LineNr">22 </span>
+<span id="L23" class="LineNr">23 </span>      <span class="Statement">return</span> ret;
+<span id="L24" class="LineNr">24 </span>    }
+<span id="L25" class="LineNr">25 </span>
+<span id="L26" class="LineNr">26 </span>  <span class="Statement">private</span>:
+<span id="L27" class="LineNr">27 </span>    std::vector&lt;Item&gt; v;
+<span id="L28" class="LineNr">28 </span>};
+<span id="L29" class="LineNr">29 </span>
+<span id="L30" class="LineNr">30 </span><span class="Type">int</span> main() {
+<span id="L31" class="LineNr">31 </span>  Vector&lt;<span class="Type">int</span>&gt; nums(<span class="Constant">5</span>);
+<span id="L32" class="LineNr">32 </span>  <span class="Statement">for</span>(<span class="Type">int</span> i = <span class="Constant">0</span>; i &lt; <span class="Constant">5</span>; i++) {
+<span id="L33" class="LineNr">33 </span>    nums[i] = i;
+<span id="L34" class="LineNr">34 </span>  }
+<span id="L35" class="LineNr">35 </span>
+<span id="L36" class="LineNr">36 </span>  Vector&lt;<span class="Type">int</span>&gt; doubled = nums.map([] (<span class="Type">int</span> n) { <span class="Statement">return</span> n * <span class="Constant">2</span>; });
+<span id="L37" class="LineNr">37 </span>
+<span id="L38" class="LineNr">38 </span>  <span class="Statement">for</span>(<span class="Type">int</span> i = <span class="Constant">0</span>; i &lt; <span class="Constant">5</span>; i++) {
+<span id="L39" class="LineNr">39 </span>    std::cout &lt;&lt; nums[i] &lt;&lt; <span class="String">&quot; * 2 = &quot;</span> &lt;&lt; doubled[i] &lt;&lt; std::endl;
+<span id="L40" class="LineNr">40 </span>  }
+<span id="L41" class="LineNr">41 </span>
+<span id="L42" class="LineNr">42 </span>  <span class="Statement">return</span> <span class="Constant">0</span>;
+<span id="L43" class="LineNr">43 </span>}
+</pre></p>
+
+<p>Unfortunately, C++ cannot perform template type deduction on return values, so this approach cannot be used to return lambdas
+from functions. However, C++14 introduces the ability to deduce the return type of a function using the <code>auto</code> keyword.
+This can be used to deduce both functor classes and on-the-fly generated lambda classes. For example:</p>
+<p><pre>
+<span id="L1" class="LineNr">1 </span><span class="Type">auto</span> get_func() {
+<span id="L2" class="LineNr">2 </span>  <span class="Statement">return</span> [] (<span class="Type">int</span> x) { <span class="Statement">return</span> x + <span class="Constant">3</span>; };
+<span id="L3" class="LineNr">3 </span>}
+</pre></p>
+
+<p>
+This is not such a large disadvantage, though, because quite often returning a callable thing from a function is a situation in which
+you need to perform dynamic dispatch anyway. Consider this slightly more complicated example:
+</p>
+<p><pre>
+<span id="L1" class="LineNr">1 </span>std::function&lt;<span class="Type">int</span>(<span class="Type">int</span>)&gt; halve_or_triple(<span class="Type">int</span> n) {
+<span id="L2" class="LineNr">2 </span>  <span class="Statement">if</span>(n%<span class="Constant">2</span> == <span class="Constant">0</span>) {
+<span id="L3" class="LineNr">3 </span>    <span class="Statement">return</span> [] (<span class="Type">int</span> x) { <span class="Statement">return</span> x/<span class="Constant">2</span>; };
+<span id="L4" class="LineNr">4 </span>  }
+<span id="L5" class="LineNr">5 </span>  <span class="Statement">else</span> {
+<span id="L6" class="LineNr">6 </span>    <span class="Statement">return</span> [] (<span class="Type">int</span> x) { <span class="Statement">return</span> <span class="Constant">3</span>*x + <span class="Constant">1</span>; };
+<span id="L7" class="LineNr">7 </span>  }
+<span id="L8" class="LineNr">8 </span>}
+</pre></p>
+
+<p>Here there is no way to specialize the return type of this function to one lambda or the other at compile time&mdash;the exact type of the object
+returned from this function can only be determined at the time it is called. (Even C++14's <code>auto</code> cannot deduce the return type for you here.)
+Therefore, we must dynamically dispatch this function call.
+</p>
+
+<h3>Conclusion</h3>
+<p>
+C++ offers two techniques for writing functions that take a callable thing as a parameter: template type deduction and <code>std::function</code>.
+The template type deduction approach performs static function dispatch; that is, the function to be called is determined at compile time.
+This approach allows for aggressive optimization and low overhead in terms of both memory consumption and CPU instructions for performing the call.
+However, in situations where the function to be called cannot be determined at compile time, an additional level of indirection is needed.
+</p>
+<p>
+<code>std::function</code> offers dynamic function dispatch via a virtual function call. This comes at a cost, however: at least two virtual table
+entries must be stored for each <code>std::function</code> instance, and one vtable lookup is performed each time an instance's <code>operator()</code>
+is called. Dynamic dispatch is often necessary when returning callable things from functions. It is also essential should one wish to store
+callable things to be called at a later time, such as when registering callbacks. The tradeoff between static and dynamic dispatch is analogous
+to the tradeoff between static polymorphism (using <a href="https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern">CRTP</a>) and
+dynamic polymorphism (using virtual functions).
+</p>
+<p>As such, we conclude that the proper design for a function taking a callable thing should, if at all possible, allow the caller to determine whether
+they desire static or dynamic dispatch. Since the template type deduction approach can create a template instantiation for <code>std::function</code>,
+taking this approach permits the caller to pass either a functor or lambda directly or to pass a <code>std::function</code> instance should they
+require dynamic dispatch.
+</p>
+
+<h4>Homework</h4>
+<ol>
+	<li>How much of <code>std::function</code>'s indirection is eliminated via optimization?</li>
+	<li>How aggressively do different optimization levels inline function calls when passing callable objects? Does calling the same function, but passing
+		different callable objects each time, affect the inlining?</li>
+	<li>Does Clang generate significantly different code than GCC?</li>
+	<li>It is possible to write a functor class with a recursive <code>operator()</code>. How would one write a recursive lambda where the recursion call is
+		dynamically dispatched? Is it possible to write a recursive lambda with a statically dispatched recursion call?</li>
+</ol>
+</body>
+</html>
