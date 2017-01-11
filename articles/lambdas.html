@@ -220,7 +220,7 @@ To find out what is passed as the two arguments to this function, let's have a l
 
 <p>
 So, we see (from line 126) that <code>x</code> is stored at <code>rbp-0x4</code>, and is (indirectly, via lines 131 and 133) copied into <code>esi</code>.
-Lines 132 and 134 place the address <code>rbp-0x20</code> into <code>rdi</code> (<code>lea</code> stands for "load effective addresss").
+Lines 132 and 134 place the address <code>rbp-0x20</code> into <code>rdi</code> (<code>lea</code> stands for "load effective address").
 This address, naturally, is the <code>this</code> pointer for our functor object!
 </p>
 
