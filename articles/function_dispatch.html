@@ -3,7 +3,7 @@
 <head>
 <title>C++ Function Dispatch Under The Hood</title>
 <link href="../style.css" rel="stylesheet" type="text/css">
-<!-- Styling for vim syntax hilighting -->
+<!-- Styling for vim syntax highlighting -->
 <style type="text/css">
 <!--
 pre { white-space: pre-wrap; font-family: monospace; color: #202020; background-color: #eeeeee; }
@@ -22,7 +22,6 @@ h3 { display:block; }
 code { color: #202020; background-color:#eeeeee; }
 -->
 </style>
-<!-- TODO: proofreading -->
 </head>
 <body>
 <div><a href="..">Home</a> <a href="index.html">Articles</a><hr></div>
@@ -250,7 +249,7 @@ for every plain function of the same type (taking one <code>int</code> and retur
 produces a template instance for that particular functor class or lambda.
 </p>
 <p>
-Functors and lambdas can't reuse template instatiations for
+Functors and lambdas can't reuse template instantiations for
 different lambdas or functor classes because the template instance must hard-code the <code>operator()</code> to be called, unlike with
 function pointers, where the function to be called is a parameter to <code>template_caller</code>. To achieve such reuse, we need to
 introduce another layer of indirection. <code>std::function</code> implements this indirection with a virtual <code>operator()</code> function.
@@ -275,7 +274,7 @@ For each call to <code>function_caller</code>, we should expect three function c
 We'll examine the first two; the destructor is relatively uninteresting.
 </p>
 
-<h4>Function:</h4>
+<h4>Plain Function:</h4>
 <h5>Constructor:</h5>
 <p><pre>
 <span id="L215" class="LineNr"> 215 </span><span class="CPP">  y = function_caller(function, 5);</span>
@@ -397,7 +396,7 @@ What's important to note here is that <code>this+0x18</code> holds the address o
 We'll need to know this when analyzing <code>std::function::operator()</code>.
 </p>
 
-<h5>Calling <code>function_caller</code></h5>
+<h5>Calling <code>function_caller</code>:</h5>
 <p>
 Back in <code>main()</code>, we see that a pointer to the <code>std::function</code> object is passed in <code>rdi</code>, and <code>arg</code>'s value,
 5, is passed in <code>esi</code>:</p>
@@ -465,6 +464,7 @@ Back in <code>main()</code>, we see that a pointer to the <code>std::function</c
 </ol>
 </p>
 
+<p>It is the responsibility of <code>_M_invoke</code> to interpret what is stored in the <code>std::function</code> object and how to call it:</p>
 <p><pre>
 <span id="L1064" class="LineNr">1064 </span><span class="Header">0000000000400f97 &lt;std::_Function_handler&lt;int (int), int (*)(int)&gt;::_M_invoke(std::_Any_data const&amp;, int&amp;&amp;)&gt;:</span>
 <span id="L1065" class="LineNr">1065 </span><span class="CPP">      _M_invoke(const _Any_data&amp; __functor, _ArgTypes&amp;&amp;... __args)</span>
@@ -556,7 +556,7 @@ The code shown is for a <code>Functor</code> instance.
 <ol>
 	<li>A pointer to <code>functor</code> is placed in <code>rsi</code> via lines 980, 995&ndash;998, and 1000.</li>
 	<li><code>this</code> is placed in <code>rdi</code>, as usual, by 999 and 1001.</li>
-	<li>Then, we call the handler's init function on 1002, which again forwards the call to the true handler init.</li>
+	<li>Then, we call the handler's init function on 1002, which again forwards the call to the true handler init:</li>
 </ol>
 </p>
 
@@ -684,8 +684,8 @@ Thus, each functor class and lambda requires a corresponding handler class and i
 <h4>Summary:</h4>
 <p><code>std::function</code> provides a uniform 'box' for passing around and calling any sort of callable object.
 This allows developers to write code without using templates or restricting the sort of callable things that can be passed to functions.
-<code>std::function</code> acheives this uniformity by performing dynamic function dispatch using virtual functions.
-When a <code>std::function</code> object is created, it contains either a function pointer or a functor/lambda objec, as well as
+<code>std::function</code> achieves this uniformity by performing dynamic function dispatch using virtual functions.
+When a <code>std::function</code> object is created, it contains either a function pointer or a functor/lambda object, as well as
 a vtable with a pointer to an invocation function that knows how to call the callable thing inside the <code>std::function</code> object.
 </p>
 
@@ -698,7 +698,7 @@ be reused between functor classes or lambdas.</p>
 <ol>
 	<li>Call <code>std::function::operator()</code>.</li>
 	<li>Fetch and call the virtual invocation function.</li>
-	<li>Call the appropriate function (via pointer) or <code>operator()</code> (directly).</li>
+	<li>Call the appropriate function, via either a pointer or a direct call to <code>operator()</code>.</li>
 </ol>
 </p>
 
@@ -717,8 +717,8 @@ smaller code size.</p>
 by an optimizer. As a result of this, <code>std::function</code> will always incur some function call overhead, and it will require
 memory overhead (at least two pointers, or 16 bytes on a 64-bit system) for storing the vtable.
 By comparison, directly using template type deduction and passing a lambda or functor class produces assembly that is much easier
-to optimize. It is common for the lambda/functor's <code>operator()</code> to be inlined into the template instance. This is possible
-since the template instance directly calls it, as opposed to calling via a pointer as would be the case for a virtual function
+to optimize. It is common in this case for the lambda/functor's <code>operator()</code> to be inlined into the template instance.
+This is possible since the template instance directly calls it, as opposed to calling via a pointer as would be the case for a virtual function
 dispatch or a function pointer. Furthermore, in the case that the function being passed a callable is small, the template instantiation
 may itself be inlined into the call site, resulting in a net reduction of two function calls.
 </p>
@@ -774,6 +774,8 @@ For an example of how this would work as a member function of a templated class,
 <span id="L42" class="LineNr">42 </span>  <span class="Statement">return</span> <span class="Constant">0</span>;
 <span id="L43" class="LineNr">43 </span>}
 </pre></p>
+<p>(Note: this <code>map()</code> function requires that the function passed to it map <code>Item</code> to <code>Item</code>.
+	For a more flexible but less clear example, see <a href="lambdas/better-vector.cpp">this Vector implementation</a>.)</p>
 
 <p>Unfortunately, C++ cannot perform template type deduction on return values, so this approach cannot be used to return lambdas
 from functions. However, C++14 introduces the ability to deduce the return type of a function using the <code>auto</code> keyword.
@@ -815,8 +817,8 @@ However, in situations where the function to be called cannot be determined at c
 <code>std::function</code> offers dynamic function dispatch via a virtual function call. This comes at a cost, however: at least two virtual table
 entries must be stored for each <code>std::function</code> instance, and one vtable lookup is performed each time an instance's <code>operator()</code>
 is called. Dynamic dispatch is often necessary when returning callable things from functions. It is also essential should one wish to store
-callable things to be called at a later time, such as when registering callbacks. The tradeoff between static and dynamic dispatch is analogous
-to the tradeoff between static polymorphism (using <a href="https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern">CRTP</a>) and
+callable things to be called at a later time, such as when registering callbacks. The trade-off between static and dynamic dispatch is analogous
+to the trade-off between static polymorphism (using <a href="https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern">CRTP</a>) and
 dynamic polymorphism (using virtual functions).
 </p>
 <p>As such, we conclude that the proper design for a function taking a callable thing should, if at all possible, allow the caller to determine whether
