@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>CS 5201: Unit Testing</title>
+<link href="../style.css" type="text/css" rel="stylesheet">
+</head>
+<body>
+	<div><a href="..">Home</a> <a href=".">CS 5201</a><hr></div>
+<h2>CS 5201: Unit Testing</h2>
+
+<p>
+Unit testing is a fantastic way to write bug-free code and to keep your code bug-free, even in big codebases.
+At S&amp;T, you have at least three choices for unit test frameworks.
+Most people prefer GTest; some of you know Boost UTF from my CS 1001 class, and Catch comes recommended from a friend who writes C++ for a living.
+</p>
+
+<p>
+Regardless of your choice, I recommend providing a <code>test</code> target in your makefile
+so you can simply run <code>make test</code> to build and run your unit tests.
+Also, make sure that <code>make clean</code> cleans up any object files your unit tests produce.
+</p>
+
+<h3>GTest / Google Test</h3>
+
+<p>Google provides a unit testing framework that is generally considered to be very easy to use.
+The best way to get started is to read their <a href="https://github.com/google/googletest/blob/master/googletest/docs/Primer.md">Primer</a>.
+They also provide some <a href="https://github.com/google/googletest/tree/master/googletest/docs">documentation</a>.
+</p>
+
+<p>Note that Google's documentation shows <code>#include "gtest/gtest.h"</code>; however, GTest is installed in a standard place on the campus machines,
+so you should <code>#include &lt;gtest/gtest.h&gt;</code> instead.
+</p>
+
+<p>Using GTest on the campus machines is a little unusual, since Google does not provide binaries, only source.
+The GTest source is located at <code>/usr/src/gtest</code>.
+Fortunately, compiling this is easy and can be incorporated into your makefile; see <a href="unit-testing/gtest">an example</a>.
+The example makefile builds GTest in a <code>gtest</code> subfolder&mdash;naturally, you shouldn't include any of that compiled junk when you submit!
+</p>
+
+<h3>Boost UTF</h3>
+
+<p>Boost contains a unit test framework (UTF), because of course it does.
+The <a href="http://www.boost.org/doc/libs/1_39_0/libs/test/doc/html/index.html">documentation</a> is detailed, if a bit daunting.
+I found <a href="http://www.alittlemadness.com/2009/03/31/c-unit-testing-with-boosttest/">this tutorial</a> handy for getting started.
+There's also my <a href="http://web.mst.edu/~nmjxv3/cs1001/11-unit_testing.pdf">CS 1001 slides</a> that go along with the <a href="unit-testing/boost">example code</a>.
+</p>
+
+<p>The general gist of unit testing with Boost is that you have a pile of assertions that check that various things are equal, not equal, etc.
+(There are also assertions for comparing floating point values and for verifying that exceptions are or aren't thrown.)
+Boost has three levels of asserts: <code>WARN</code>, which prints a message; <code>ERROR</code>, which prints an error, but keeps testing;
+and <code>REQUIRE</code>, which prints an error and halts the test.
+</p>
+
+<p>These assertions are used by test cases, which are functions that each test one small part of your program.
+You can organize test cases into test suites; it's generally good to make a test suite for each class.
+I recommend making a <code>test_classname.cpp</code> file for each class so your tests are easy to find.
+</p>
+
+<p>If you're testing a class, you'll commonly want to make up some instances of that class that each test case can use.
+Boost offers a Test Fixture feature that configures code to be run before and after each test case.
+That code can set up objects that your test cases can then use without needing to repeat the setup code in each test case.
+</p>
+
+<p>In your individual test cpp files, I recommend you include just the prototypes for the UTF by using <code>#include&lt;boost/test/unit_test.hpp&gt;</code>.
+Then, make a <code>test_main.cpp</code> file that includes the UTF implementation; see the <a href="unit-testing/boost">example code</a>.
+This dramatically shortens the compile time for your tests!
+</p>
+
+<h3>Catch</h3>
+
+<p><a href="https://github.com/philsquared/Catch">Catch</a> is a header-only unit test framework, so you can just download the header file, include it, and you're good to go.
+It has a different take on testing from how Boost and GTest work; it's similar to RSpec, if you know that tool.
+Most significantly, it doesn't use test fixtures&mdash;it has a different means of acheiving the same functionality.
+</p>
+
+<p>If you use Catch, let me know if you like it or not!
+I haven't used it personally, so this is not the option I'd take if you aren't already familiar with unit testing since I won't be able to help much.
+</p>
+
+</body>
+</html>
