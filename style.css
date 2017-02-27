@@ -22,15 +22,21 @@ hr {
 	color:black;
 	background-color:black;
 }
-h3 { 
+h3 {
 	display: inline;
 }
+p {
+	clear:both;
+}
+
+/* Ma face */
 .mug {
 	float: right;
 	padding: 15px;
 	margin-left:50px;
 }
 
+/* Table formatting */
 table,th,td {
 	border-bottom: 1px solid black;
 	border-collapse: collapse;
@@ -41,6 +47,29 @@ th,td {
 }
 tr:nth-child(even) {background-color: #f2f2f2}
 
+/* Styling for syntax highlighting */
 pre {
-	margin:0px;
+	white-space: pre-wrap;
+	font-family: monospace;
+	color: #202020;
+	background-color: #eeeeee;
+	float:left;
+	margin:5px;
+	padding:2px;
+}
+
+.Type { color: #af5faf; }
+.LineNr { color: #808080; }
+.lnr { color: #808080; }
+.Comment { color: #505050; }
+.Constant { color: #0087ff; }
+.String { color: #005fd7; }
+.PreProc { color: #00d75f; }
+.Statement { color: #875faf; }
+.CPP { color: #af5faf; }
+.Header { color: #875faf; }
+
+code {
+	color: #202020;
+	background-color:#eeeeee;
 }
