@@ -48,19 +48,24 @@ th,td {
 tr:nth-child(even) {background-color: #f2f2f2}
 
 /* Styling for syntax highlighting */
+pre,code {
+	color: #202020;
+	background-color:#eeeeee;
+}
 pre {
 	white-space: pre-wrap;
 	font-family: monospace;
-	color: #202020;
-	background-color: #eeeeee;
 	float:left;
 	margin:5px;
 	padding:2px;
 }
 
+.lnr,.LineNr {
+	color: #808080;
+	border-right: 1px solid #bebebe;
+	margin-right: 5px;
+}
 .Type { color: #af5faf; }
-.LineNr { color: #808080; }
-.lnr { color: #808080; }
 .Comment { color: #505050; }
 .Constant { color: #0087ff; }
 .String { color: #005fd7; }
@@ -69,7 +74,3 @@ pre {
 .CPP { color: #af5faf; }
 .Header { color: #875faf; }
 
-code {
-	color: #202020;
-	background-color:#eeeeee;
-}
