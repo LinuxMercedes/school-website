@@ -36,16 +36,22 @@ This page explains the expectations for these documentations; they are liberally
 	A) A good precondition should do the following (of course, non-exhaustive list):
 
 	<ul>
-		<li>specify <b>invalid values</b> for input (example: if you divide by something, better put in that it may not be zero)</li>
-		<li>specify any <b>valid ranges</b> for input (example: if your function will only work as expected for values 0, 1, and 2, specify that)</li>
-		<li>when dealing with templates, specify <b>specific</b> operations and operators that must be defined on the templated type(s) for the function to function</li>
-		<li>Be descriptive on operators. "T must have -", OK, sure, but which -? Unary, binary? What does it have to be defined for? <code>T - U</code>, <code>T - double</code>?</li>
+		<li>Specify <b>invalid values</b> for input (example: if you divide by something, better put in that it may not be zero).</li>
+		<li>Specify any <b>valid ranges</b> for input (example: if your function will only work as expected for values 0, 1, and 2, specify that).</li>
+		<li>When dealing with templates, specify <b>specific</b> operations and operators that must be defined on the templated type(s) for the function to function.</li>
+		<li>Be descriptive about operators. "T must have -", OK, sure, but which -? Unary, binary? What does it have to be defined for? <code>T - U</code>, <code>T - double</code>?</li>
+		<li>When templated on several types, describe how those must be able to interact; e.g., <code>T * U</code> must be defined, or <code>Func(T)</code>.
 	</ul>
 
 	In other words, you should specify values that will or will not work for that function.
 	By 'work' here we mean that the function will do something reasonable and not throw an exception.
 	(This does not mean that you can just write "don't pass 0" in your precondition and then not bother throwing an exception should the user pass 0!)
 	Mention here or somewhere in the documentation that your function throws an exception if it does.
+	</p>
+
+	<p>
+	If you have a precondition that holds for all or most member functions in a class, it is OK to list that in a precondition for the class, rather than in each member function.
+	However, if, for instance, you have one function that needs <code>sqrt(T)</code> defined, just put that in the pre for that function.
 	</p>
 </blockquote>
 
@@ -62,7 +68,7 @@ This page explains the expectations for these documentations; they are liberally
 		<li>"&lt;parameter&gt; must be fully constructed."  If you manage to get into the function without fully constructed objects, your computer probably does not work like it should.  Objects are inherently constructed; if not, the program enters an error state (or should).</li>
 		<li>"&lt;parameter&gt; must have values".  It is the developer's responsibility to make sure the data they pass to your function is what they want it to be. Unless a certain value will cause your function to break, you may assume GIGO (garbage in, garbage out).</li>
 		<li>"user must pass menu option to function".  Just... no.  If it's not clear what your parameter is supposed to be, you should probably rename it to make sense.  Also, what happens if the user wants to use that function for a non-menu thing?</li>
-		<li>"&lt;parameter&gt; must be a double, float, or integer type".  If you do this (and your code is a template), what's the point of a template? Overload it or template specialize it.  If I have free time, and I see this comment, I will probably (out of spite, and needing a life) try to pass other data types to it.  If it works... watch out!  If you didn't template it... well... just no.</li>
+		<li>"&lt;parameter&gt; must be a double, float, or integer type".  If you do this (and your code is a template), what's the point of a template? Overload it or template specialize it.</li>
 		<li>"Class &lt;class you are currently implementing&gt; must exist".  You just implemented it.  It exists.  That's a given.</li>
 		<li>"The template parameter for the function must match the template parameter for the class". If you use the same template parameter name for both (e.g., <code>T</code>), then the compiler enforces this for you. If you did something fancy with a second template parameter, why bother with that if you're going to put this in the preconditions?</li>
 	</p>
