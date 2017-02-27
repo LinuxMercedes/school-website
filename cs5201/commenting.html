@@ -1,0 +1,252 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>CS 5201: Pre- and Post-conditions</title>
+<link href="../style.css" type="text/css" rel="stylesheet">
+</head>
+<body>
+	<div><a href="..">Home</a> <a href=".">CS 5201</a><hr></div>
+<h2>CS 5201: Pre- and Post-conditions</h2>
+
+<p>
+As part of this course you are expected to produce high-quality documentation for the code you write.
+This documentation must include pre- and post-conditions for all member and friend functions.
+Part of the problem with documentation, like English grammar, is when you are taught it when you can't appreciate how important it is.
+This page explains the expectations for these documentations; they are liberally borrowed from the requirements of previous CS 5201 graders (Billy Rhoades and Nate Eloe).
+</p>
+
+<h3>Preconditions</h3>
+
+<blockquote>
+	<p>
+	Q) What is a precondition?
+	</p>
+
+	<p>
+	A) A precondition is a statement about what must be true about the inputs to a function to guarantee that the function will behave as expected (which you specify in postconditions).
+	</p>
+</blockquote>
+
+<blockquote>
+	<p>
+	Q) What should a good precondition do?
+	</p>
+
+	<p>
+	A) A good precondition should do the following (of course, non-exhaustive list):
+
+	<ul>
+		<li>specify <b>invalid values</b> for input (example: if you divide by something, better put in that it may not be zero)</li>
+		<li>specify any <b>valid ranges</b> for input (example: if your function will only work as expected for values 0, 1, and 2, specify that)</li>
+		<li>when dealing with templates, specify <b>specific</b> operations and operators that must be defined on the templated type(s) for the function to function</li>
+		<li>Be descriptive on operators. "T must have -", OK, sure, but which -? Unary, binary? What does it have to be defined for? <code>T - U</code>, <code>T - double</code>?</li>
+	</ul>
+
+	In other words, you should specify values that will or will not work for that function.
+	By 'work' here we mean that the function will do something reasonable and not throw an exception.
+	(This does not mean that you can just write "don't pass 0" in your precondition and then not bother throwing an exception should the user pass 0!)
+	Mention here or somewhere in the documentation that your function throws an exception if it does.
+	</p>
+</blockquote>
+
+<blockquote>
+	<p>
+	Q) What should a good precondition <b>not</b> do?
+	</p>
+
+	<p>
+	A) There are lots of things that we would consider silly preconditions, including the following:
+
+	<ul>
+		<li>"&lt;parameter&gt; must be a valid &lt;type&gt;".  WAY too ambiguous; what is valid? If any values are allowed, are you saying that what you pass in must be of type &lt;type&gt;? That's the compiler's job to check that for you.  Don't do this.</li>
+		<li>"&lt;parameter&gt; must be fully constructed."  If you manage to get into the function without fully constructed objects, your computer probably does not work like it should.  Objects are inherently constructed; if not, the program enters an error state (or should).</li>
+		<li>"&lt;parameter&gt; must have values".  It is the developer's responsibility to make sure the data they pass to your function is what they want it to be. Unless a certain value will cause your function to break, you may assume GIGO (garbage in, garbage out).</li>
+		<li>"user must pass menu option to function".  Just... no.  If it's not clear what your parameter is supposed to be, you should probably rename it to make sense.  Also, what happens if the user wants to use that function for a non-menu thing?</li>
+		<li>"&lt;parameter&gt; must be a double, float, or integer type".  If you do this (and your code is a template), what's the point of a template? Overload it or template specialize it.  If I have free time, and I see this comment, I will probably (out of spite, and needing a life) try to pass other data types to it.  If it works... watch out!  If you didn't template it... well... just no.</li>
+		<li>"Class &lt;class you are currently implementing&gt; must exist".  You just implemented it.  It exists.  That's a given.</li>
+		<li>"The template parameter for the function must match the template parameter for the class". If you use the same template parameter name for both (e.g., <code>T</code>), then the compiler enforces this for you. If you did something fancy with a second template parameter, why bother with that if you're going to put this in the preconditions?</li>
+	</p>
+
+</blockquote>
+
+<blockquote>
+	<p>
+	Q) Can a function have no precondition?
+	</p>
+
+	<p>
+	A) YES! However, as soon as you introduce templates into your code, if your function does anything at all, you will <i>probably</i> have a precondition.  Take the time to carefully analyze what your function does and ask yourself "what will break this?"
+	</p>
+</blockquote>
+
+<p>
+So, let's do an example:
+</p>
+
+<p><pre>
+<span id="L1" class="LineNr"> 1 </span><span class="Comment">/// desc: compares the magnitude (square root of the sum of the squares</span>
+<span id="L2" class="LineNr"> 2 </span><span class="Comment">///       of the values) of the two vectors</span>
+<span id="L3" class="LineNr"> 3 </span><span class="Comment">/// pre:  ... see below</span>
+<span id="L4" class="LineNr"> 4 </span><span class="Comment">/// post: None</span>
+<span id="L5" class="LineNr"> 5 </span><span class="Comment">//</span>
+<span id="L6" class="LineNr"> 6 </span><span class="Comment">/// ...bet you thought I made a mistake...</span>
+<span id="L7" class="LineNr"> 7 </span><span class="Comment">/// return: -1 if |vec1| &gt; |vec2|, 0 if |vec1| == |vec2|, 1 if |vec1| &gt; |vec2|</span>
+<span id="L8" class="LineNr"> 8 </span><span class="Comment">/// throws: std::domain_error if vec1.size() != vec2.size()</span>
+<span id="L9" class="LineNr"> 9 </span>
+<span id="L10" class="LineNr">10 </span><span class="Type">template</span> &lt;<span class="Type">class</span> T&gt;
+<span id="L11" class="LineNr">11 </span><span class="Type">int</span> compare_magnitude(<span class="Type">const</span> std::vector&lt;T&gt; vec1, <span class="Type">const</span> std::vector&lt;T&gt; vec2)
+<span id="L12" class="LineNr">12 </span>{
+<span id="L13" class="LineNr">13 </span>  T sum1, sum2;
+<span id="L14" class="LineNr">14 </span>  T mag1, mag2;
+<span id="L15" class="LineNr">15 </span>  <span class="Type">int</span> retval = <span class="Constant">0</span>;
+<span id="L16" class="LineNr">16 </span>
+<span id="L17" class="LineNr">17 </span>  <span class="Statement">if</span>(vec1.size() != vec2.size())
+<span id="L18" class="LineNr">18 </span>    <span class="Exception">throw</span> std::domain_error(<span class="String">&quot;Vectors are not equal sizes&quot;</span>);
+<span id="L19" class="LineNr">19 </span>
+<span id="L20" class="LineNr">20 </span>  <span class="Statement">for</span> (<span class="Type">int</span> i=<span class="Constant">0</span>; i&lt;vec1.size(); i++)
+<span id="L21" class="LineNr">21 </span>  {
+<span id="L22" class="LineNr">22 </span>    sum1 += vec1[i] * vec1[i];
+<span id="L23" class="LineNr">23 </span>    sum2 += vec2[i] * vec2[i];
+<span id="L24" class="LineNr">24 </span>  }
+<span id="L25" class="LineNr">25 </span>
+<span id="L26" class="LineNr">26 </span>  mag1 = std::sqrt(sum1);
+<span id="L27" class="LineNr">27 </span>  mag2 = std::sqrt(sum2);
+<span id="L28" class="LineNr">28 </span>
+<span id="L29" class="LineNr">29 </span>  <span class="Statement">if</span> (mag1 &gt; mag2)
+<span id="L30" class="LineNr">30 </span>    retval = -<span class="Constant">1</span>;
+<span id="L31" class="LineNr">31 </span>  <span class="Statement">else</span> <span class="Statement">if</span> (mag1 &lt; mag2)
+<span id="L32" class="LineNr">32 </span>    retval = <span class="Constant">1</span>;
+<span id="L33" class="LineNr">33 </span>
+<span id="L34" class="LineNr">34 </span>  <span class="Statement">return</span> retval;
+<span id="L35" class="LineNr">35 </span>}
+</pre></p>
+
+<p>
+First, some good preconditions:
+
+<pre>
+<span id="L1" class="LineNr">1 </span><span class="Comment">// PRE: T * T (multiplication) defined, and results in type T (or is implicitly castable to T)</span>
+<span id="L2" class="LineNr">2 </span><span class="Comment">//      T += T (in place addition) defined</span>
+<span id="L3" class="LineNr">2 </span><span class="Comment">//      T &gt; T and T &lt; T (comparison) defined</span>
+<span id="L4" class="LineNr">3 </span><span class="Comment">//      std::sqrt(T) defined</span>
+<span id="L5" class="LineNr">4 </span><span class="Comment">//      vec1.size() == vec2.size()</span>
+</pre>
+</p>
+
+<p>
+The last two deserve some explanation.  There is nothing stopping someone from overloading the <code>std::sqrt</code> function to handle a custom class (say, complex numbers or bignums).
+
+Also, our function would <i>technically</i> not crash as long as <code>vec1.size() &lt; vec2.size()</code>.
+However, we have specified that the function will compare the magnitudes; if the sizes are different, we would not be computing the magnitude of vector2.
+Note that despite including this in the preconditions, we still check and throw an exception should the condition not hold.
+</p>
+
+<p>
+Now, some bad preconditions:
+
+<pre>
+<span id="L1" class="LineNr">1 </span><span class="Comment">// T is a numeric type</span>
+</pre>
+</p>
+<blockquote>
+Not necessarily.  Let's not judge programmers who want to exploit the behavior of your function for their own nefarious ends.  As long as that functionality is defined, who are we to stop them?
+</blockquote>
+<p>
+<pre>
+<span id="L2" class="LineNr">2 </span><span class="Comment">// vec1 and vec2 contain valid data</span>
+</pre>
+</p>
+<blockquote>
+Again, who are you to judge what the valid data is?
+If you <i>do</i> have specific ideas of invalid data, say that explicitly!
+</blockquote>
+<p>
+<pre>
+<span id="L3" class="LineNr">3 </span><span class="Comment">// the vector class is included</span>
+</pre>
+</p>
+<blockquote>
+If you haven't included it, why/how are you using it?
+If your code requires something to be included, then just include it. If the user's code requires something to be included, that's their problem, not yours.
+</blockquote>
+<p>
+<pre>
+<span id="L4" class="LineNr">4 </span><span class="Comment">// vec1 is a valid vector&lt;T&gt; </span>
+</pre>
+</p>
+<blockquote>Just let the compiler do its job!
+</blockquote>
+
+
+<h3>Postconditions</h3>
+
+<p>
+Postconditions should:
+
+	<ul>
+		<li>Describe what side effects a function has.</li>
+		<li><b>Not be empty.</b></li>
+		<li>Describe if parameters, the calling object, or something else outside the scope of the function is being changed. For example, if you have a void function but edit a passed in parameter&mdash;mention that!</li>
+		<li>Describe if something is being returned, <b>how</b> it's being returned.</li>
+	</ul>
+</p>
+
+<p>
+To clarify, I do consider the return documentation to be part of the postcondition.
+However, in general, if you have a non-const member function, there ought to be something in the postcondition in addition to the return documentation.
+(The exception to this rule is for animals like <code>T&amp; operator[](const int idx)</code> where the function is non-const because the return type allows the member variables to be modified elsewhere.)
+</p>
+
+<p>
+Post conditions should not:
+
+<ul>
+	<li>Describe the operation of a function.</li>
+  <li>Be empty.</li>
+  <li>Describe what isn't done.</li>
+	</ul>
+</p>
+
+<p>
+For example, here is a good pre/post block:
+
+<pre>
+<span id="L1" class="LineNr">1 </span><span class="Comment">/*</span><span class="Comment"> Scalar matrix multipication. Returns a copy of the result matrix.</span>
+<span id="L2" class="LineNr">2 </span><span class="Comment"> *</span>
+<span id="L3" class="LineNr">3 </span><span class="Comment"> * Pre: T::operator*=(T) must be defined.</span>
+<span id="L4" class="LineNr">4 </span><span class="Comment"> * Post: a copy of this matrix with each element multiplied by rhs is returned.</span>
+<span id="L5" class="LineNr">5 </span><span class="Comment"> </span><span class="Comment">*/</span>
+<span id="L6" class="LineNr">6 </span>DerivedMatrix&lt;T&gt; <span class="Operator">operator</span>*(<span class="Type">const</span> T rhs) <span class="Type">const</span>;
+</pre>
+
+<p>
+Notice the explicit mention of the return method (copy) and what the return value is.
+</p>
+
+<p>
+For completeness, I have included the only function that has a postcondition of none. Please note that the below code is &copy; 2017 Nathan Jarus and may not be used without express written permission.
+
+<pre>
+<span id="L1" class="LineNr">1 </span><span class="Type">void</span> do_nothing() { <span class="Statement">return</span>; }
+</pre>
+</p>
+
+<h3>Conclusions</h3>
+
+<p>When writing documentation, there are two overarching rules to keep in mind:
+
+<ol>
+	<li>Don't include detail that the compiler checks at compile time</li>
+	<li>Write documentation as if the reader will never see your implementation code</li>
+</ol>
+</p>
+
+<p>
+I'm hoping you take this information to heart.
+My job and life is a lot easier (and happier) when you guys write good function docs.
+I want you folks to succeed, and that includes writing code that if it were to be used by someone else, wouldn't arbitrarily delete data without documenting it somewhere <small>*cough*mongodb driver*cough*</small>.
+I know it's a pain to write good function docs, but they will save anyone using your library tons of time down the road.
+</p>
+
+</body>
+</html>
