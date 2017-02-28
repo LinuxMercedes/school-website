@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>C++ Move Semantics Gotchas</title>
+<link href="../style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<div><a href="..">Home</a> <a href="index.html">Articles</a><hr></div>
+<h2>C++ Move Semantics Gotchas</h2>
+<p>
+C++ move semantics are a powerful feature for writing fast code, but they have some subtle gotchas.
+In this article, we will examine two potential problems: a performance issue where the move constructor is seemingly not called, and a safety issue where it is possible to use a moved value.
+</p>
+
+<h3>The Code</h3>
+
+<p>
+In this article, we'll be examining implemenations of the <code>operator+</code> function for the following class:
+
+<pre>
+<span id="L1" class="LineNr"> 1 </span><span class="PreProc">#include</span><span class="String">&lt;iostream&gt;</span>
+<span id="L2" class="LineNr"> 2 </span><span class="Statement">using</span> <span class="Type">namespace</span> std;
+<span id="L3" class="LineNr"> 3 </span>
+<span id="L4" class="LineNr"> 4 </span><span class="Type">struct</span> test {
+<span id="L5" class="LineNr"> 5 </span>  <span class="Type">int</span>* bob;
+<span id="L6" class="LineNr"> 6 </span>
+<span id="L7" class="LineNr"> 7 </span>  test(<span class="Type">int</span> b): bob(<span class="Statement">new</span> <span class="Type">int</span>(b)) {}
+<span id="L8" class="LineNr"> 8 </span>
+<span id="L9" class="LineNr"> 9 </span>  ~test() { <span class="Statement">delete</span> bob; }
+<span id="L10" class="LineNr">10 </span>
+<span id="L11" class="LineNr">11 </span>  test(<span class="Type">const</span> test&amp; t) {
+<span id="L12" class="LineNr">12 </span>    cerr &lt;&lt; <span class="String">&quot;Copy constructor</span><span class="Special">\n</span><span class="String">&quot;</span>;
+<span id="L13" class="LineNr">13 </span>    bob = <span class="Statement">new</span> <span class="Type">int</span>(*(t.bob));
+<span id="L14" class="LineNr">14 </span>  }
+<span id="L15" class="LineNr">15 </span>
+<span id="L16" class="LineNr">16 </span>  test(test&amp;&amp; t) {
+<span id="L17" class="LineNr">17 </span>    cerr &lt;&lt; <span class="String">&quot;Move constructor</span><span class="Special">\n</span><span class="String">&quot;</span>;
+<span id="L18" class="LineNr">18 </span>    bob = t.bob;
+<span id="L19" class="LineNr">19 </span>    t.bob = <span class="Constant">nullptr</span>;
+<span id="L20" class="LineNr">20 </span>  }
+<span id="L21" class="LineNr">21 </span>
+<span id="L22" class="LineNr">22 </span>  test&amp; <span class="Operator">operator</span>=(<span class="Type">const</span> test&amp; t) {
+<span id="L23" class="LineNr">23 </span>    cerr &lt;&lt; <span class="String">&quot;Copy assignment</span><span class="Special">\n</span><span class="String">&quot;</span>;
+<span id="L24" class="LineNr">24 </span>    *bob = *(t.bob);
+<span id="L25" class="LineNr">25 </span>    <span class="Statement">return</span> *<span class="Statement">this</span>;
+<span id="L26" class="LineNr">26 </span>  }
+<span id="L27" class="LineNr">27 </span>
+<span id="L28" class="LineNr">28 </span>  test&amp; <span class="Operator">operator</span>=(test&amp;&amp; t) {
+<span id="L29" class="LineNr">29 </span>    cerr &lt;&lt; <span class="String">&quot;Move assignment</span><span class="Special">\n</span><span class="String">&quot;</span>;
+<span id="L30" class="LineNr">30 </span>    <span class="Statement">if</span>(<span class="Statement">this</span> != &amp;t) {
+<span id="L31" class="LineNr">31 </span>      bob = t.bob;
+<span id="L32" class="LineNr">32 </span>      t.bob = <span class="Constant">nullptr</span>;
+<span id="L33" class="LineNr">33 </span>    }
+<span id="L34" class="LineNr">34 </span>    <span class="Statement">return</span> *<span class="Statement">this</span>;
+<span id="L35" class="LineNr">35 </span>  }
+<span id="L36" class="LineNr">36 </span>
+<span id="L37" class="LineNr">37 </span>  test&amp; <span class="Operator">operator</span>+=(<span class="Type">const</span> test&amp; rhs) {
+<span id="L38" class="LineNr">38 </span>    cerr &lt;&lt; <span class="String">&quot;Do +=</span><span class="Special">\n</span><span class="String">&quot;</span>;
+<span id="L39" class="LineNr">39 </span>    *bob += *(rhs.bob);
+<span id="L40" class="LineNr">40 </span>    <span class="Statement">return</span> *<span class="Statement">this</span>;
+<span id="L41" class="LineNr">41 </span>  }
+<span id="L42" class="LineNr">42 </span>
+<span id="L43" class="LineNr">43 </span>};
+<span id="L44" class="LineNr">44 </span>
+<span id="L45" class="LineNr">45 </span><span class="Type">int</span> main() {
+<span id="L46" class="LineNr">46 </span>  test a(<span class="Constant">5</span>), b(<span class="Constant">3</span>);
+<span id="L47" class="LineNr">47 </span>
+<span id="L48" class="LineNr">48 </span>  cerr &lt;&lt; <span class="String">&quot;Adding a and b</span><span class="Special">\n</span><span class="String">&quot;</span>;
+<span id="L49" class="LineNr">49 </span>  test c(a + b);
+<span id="L50" class="LineNr">50 </span>
+<span id="L51" class="LineNr">51 </span>  cerr &lt;&lt; <span class="String">&quot;Creating d</span><span class="Special">\n</span><span class="String">&quot;</span>;
+<span id="L52" class="LineNr">52 </span>  test d(a);
+<span id="L53" class="LineNr">53 </span>
+<span id="L54" class="LineNr">54 </span>  <span class="Statement">return</span> <span class="Constant">0</span>;
+<span id="L55" class="LineNr">55 </span>}
+</pre>
+</p>
+
+<h3>Uncalled Move Constructor</h3>
+
+<p>
+For our <code>operator+</code> function, we would like to do the following:
+<ol>
+	<li>Copy one of the operands to a temporary value</li>
+	<li>Add the other operand to the temporary value</li>
+	<li>Move the temporary value out of the function when it returns</li>
+</ol>
+</p>
+
+<p>
+Consider this implementation of <code>operator+</code>. It appears to meet all three requirements:
+<ol>
+	<li>Since we pass <code>lhs</code> by value, the compiler creates a function-scoped copy that we can manipulate</li>
+	<li>We add <code>rhs</code> to our copy of <code>lhs</code></li>
+	<li>Lastly, we return the result of this addition, which is a function-scoped value, so the compiler should move it for us</li>
+</ol>
+
+<pre>
+<span id="L1" class="LineNr">1 </span>  <span class="Statement">friend</span> test <span class="Operator">operator</span>+(test lhs, <span class="Type">const</span> test&amp; rhs) {
+<span id="L2" class="LineNr">2 </span>    cerr &lt;&lt; <span class="String">&quot;Do +</span><span class="Special">\n</span><span class="String">&quot;</span>;
+<span id="L3" class="LineNr">3 </span>    <span class="Statement">return</span> lhs += rhs;
+<span id="L4" class="LineNr">4 </span>  }
+</pre>
+
+<p>
+However, the harsh reality of C++ serves us a cold slap in the face. The above code <a href="">outputs</a> the following:
+
+<pre>
+Adding a and b
+Copy constructor
+Do +
+Do +=
+Copy constructor
+Creating d
+Copy constructor
+</pre>
+</p>
+
+<p>
+No calls to the move constructor at all, and three calls to the copy constructor!
+In particular, that second call to the copy constructor comes at the end of <code>operator+</code>.
+What is going wrong?
+</p>
+
+<p>
+Before answering that question, let's consider a different implementation that appears to do the exact same thing:
+
+<pre>
+<span id="L1" class="LineNr">1 </span>  <span class="Statement">friend</span> test <span class="Operator">operator</span>+(test lhs, <span class="Type">const</span> test&amp; rhs) {
+<span id="L2" class="LineNr">2 </span>    cerr &lt;&lt; <span class="String">&quot;Do +</span><span class="Special">\n</span><span class="String">&quot;</span>;
+<span id="L3" class="LineNr">3 </span>    lhs += rhs;
+<span id="L4" class="LineNr">4 </span>    <span class="Statement">return</span> lhs;
+<span id="L5" class="LineNr">5 </span>  }
+</pre>
+</p>
+
+<p>
+The <a href="https://eval.in/744915">output</a> of this code, however, is different! It works the way we expected the first function to do.
+
+<pre>
+Adding a and b
+Copy constructor
+Do +
+Do +=
+Move constructor
+Creating d
+Copy constructor
+</pre>
+</p>
+
+<p>
+Unlike real life, in C++, everything happens for a reason.
+</p>
+
+</body>
+</html>
