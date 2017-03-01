@@ -153,7 +153,7 @@ Copy constructor
 Unlike real life, in C++, everything happens for a reason.
 One thing (perhaps the only thing) that differs between the two is the value of the thing being returned.
 In the second example, <code>lhs</code> has type <code>test</code>, but in the first, <code>lhs += rhs</code> has type <code>test&amp;</code>.
-Now, consider this third example, where we're passing in <code>lhs</code> by reference:
+Now, consider this third example, where we're passing in <code>lhs</code> by reference, and thus it has type <code>test&amp;</code>:
 
 <pre>
 <span id="L1" class="LineNr">1 </span>  <span class="Statement">friend</span> test <span class="Operator">operator</span>+(test&amp; lhs, <span class="Type">const</span> test&amp; rhs) {
@@ -173,7 +173,7 @@ And, in fact, <a href="https://eval.in/744932">it doesn't</a>.
 <p>
 So, the issue is that in our first example, we're technically returning a <code>test&amp;</code>, and the compiler cannot convince itself that whatever object the return value references won't be used again somewhere else.
 In this case, though, we can see what the compiler doesn't: the reference returned from <code>lhs += rhs</code> is to the function-scoped copy of <code>lhs</code>.
-So, to ensure that our <code>operator+</code> properly moves its return value out, we can either take the second approach (<code>return lhs;</code>), or we can write <a href="https://eval.in/744934">a version</a> that explicitly moves the return value:
+So, to ensure that our <code>operator+</code> properly moves its return value out, we can either take the second approach (<code>return lhs</code>), or we can write <a href="https://eval.in/744934">a version</a> that explicitly moves the return value:
 
 <pre>
 <span id="L1" class="LineNr">1 </span>  <span class="Statement">friend</span> test <span class="Operator">operator</span>+(test lhs, <span class="Type">const</span> test&amp; rhs) {
