@@ -10,12 +10,13 @@
 <p>
 C++ move semantics are a powerful feature for writing fast code, but they have some subtle gotchas.
 In this article, we will examine two potential problems: a performance issue where the move constructor is seemingly not called, and a safety issue where it is possible to use a moved value.
+We'll examine the cause of both of these problems and conclude with some design takeaways to avoid such problems.
 </p>
 
 <h3>The Code</h3>
 
 <p>
-In this article, we'll be examining implemenations of the <code>operator+</code> function for the following class:
+In this article, we'll be examining implemenations of the <code>operator+</code> function for the following <code>test</code> class:
 
 <pre>
 <span id="L1" class="LineNr"> 1 </span><span class="PreProc">#include</span><span class="String">&lt;iostream&gt;</span>
@@ -150,7 +151,68 @@ Copy constructor
 
 <p>
 Unlike real life, in C++, everything happens for a reason.
+One thing (perhaps the only thing) that differs between the two is the value of the thing being returned.
+In the second example, <code>lhs</code> has type <code>test</code>, but in the first, <code>lhs += rhs</code> has type <code>test&amp;</code>.
+Now, consider this third example, where we're passing in <code>lhs</code> by reference:
+
+<pre>
+<span id="L1" class="LineNr">1 </span>  <span class="Statement">friend</span> test <span class="Operator">operator</span>+(test&amp; lhs, <span class="Type">const</span> test&amp; rhs) {
+<span id="L2" class="LineNr">2 </span>    cerr &lt;&lt; <span class="String">&quot;Do +</span><span class="Special">\n</span><span class="String">&quot;</span>;
+<span id="L3" class="LineNr">3 </span>    lhs += rhs;
+<span id="L4" class="LineNr">4 </span>    <span class="Statement">return</span> lhs;
+<span id="L5" class="LineNr">5 </span>  }
+</pre>
 </p>
+
+<p>
+You definitely wouldn't want the compiler to move <code>lhs</code> out of this function, since you might still be using the object it's referencing elsewhere!
+And, in fact, <a href="https://eval.in/744932">it doesn't</a>.
+(As an aside, don't ever actually write an <code>operator+</code> like this...)
+</p>
+
+<p>
+So, the issue is that in our first example, we're technically returning a <code>test&amp;</code>, and the compiler cannot convince itself that whatever object the return value references won't be used again somewhere else.
+In this case, though, we can see what the compiler doesn't: the reference returned from <code>lhs += rhs</code> is to the function-scoped copy of <code>lhs</code>.
+So, to ensure that our <code>operator+</code> properly moves its return value out, we can either take the second approach (<code>return lhs;</code>), or we can write <a href="https://eval.in/744934">a version</a> that explicitly moves the return value:
+
+<pre>
+<span id="L1" class="LineNr">1 </span>  <span class="Statement">friend</span> test <span class="Operator">operator</span>+(test lhs, <span class="Type">const</span> test&amp; rhs) {
+<span id="L2" class="LineNr">2 </span>    cerr &lt;&lt; <span class="String">&quot;Do +</span><span class="Special">\n</span><span class="String">&quot;</span>;
+<span id="L3" class="LineNr">3 </span>    <span class="Statement">return</span> std::move(lhs += rhs);
+<span id="L4" class="LineNr">4 </span>  }
+</pre>
+</p>
+
+<h3>Use-after-move</h3>
+<p>
+That last example raises an interesting question: what if we tried to move the return value out of the third example?
+Take a look at this code, which is <b>one character</b> (the &amp; on <code>lhs</code>) different from the last example in the previous section:
+
+<pre>
+<span id="L1" class="LineNr">1 </span>  <span class="Statement">friend</span> test <span class="Operator">operator</span>+(test&amp; lhs, <span class="Type">const</span> test&amp; rhs) {
+<span id="L2" class="LineNr">2 </span>    cerr &lt;&lt; <span class="String">&quot;Do +</span><span class="Special">\n</span><span class="String">&quot;</span>;
+<span id="L3" class="LineNr">3 </span>    <span class="Statement">return</span> std::move(lhs += rhs);
+<span id="L4" class="LineNr">4 </span>  }
+</pre>
+</p>
+
+<p>
+Everything inside this function seems fine, but when we get to <code>test d(a)</code> in <code>main()</code>, we get a <a href="https://eval.in/744933">glorious segfault</a> since the copy constructor attempts to dereference <code>a.bob</code>, which the move constructor set to <code>nullptr</code>.
+</p>
+
+<h3>Conclusion</h3>
+<p>
+Move semantics can be tricky to get right when used implicitly, and can introduce segfaults when incorrectly used explicitly.
+Provided the move constructor sets the pointers in the moved object to null, the resulting segfault cannot leak uninitialized memory and is therefore
+probably not exploitable; however, segfaults are still frustrating to debug, especially in cases like this where the segfault is caused by a single character
+change from otherwise correct code.
+</p>
+
+<h4>Design Takeaways</h4>
+<ul>
+	<li>When you want to move a local variable out of a function, return the variable directly. Especially avoid returning the result of calling a mutator on an object.</li>
+	<li>Avoid using <code>std::move</code> outside of move constructors. Explicit moves can circumvent some of C++'s type system protections and may cause use-after-move bugs.</li>
+</ul>
 
 </body>
 </html>
