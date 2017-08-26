@@ -14,22 +14,7 @@
 Currently working on a Ph.D in Computer Science, advised by <a href="http://web.mst.edu/~sedighs">Dr. Sahra Sedigh</a> at <a href="http://mst.edu">Missouri S&amp;T</a>.
 </p>
 
-<div style="clear:both">
-<p> <h3>Research</h3>: Algebraically guided cyber-physical system model transformation</p>
-
-<p>
-Generating models for every aspect of a system is a labor-intensive and error-prone process.
-My work focuses on defining transformations from one type of system model to a different type of model, allowing developers to derive models of various system aspects easily.
-Initially I will focus on transforming system architecture models to non-functional attribute models; for example, transforming an architectural model of a power grid into a reliability model. 
-Ultimately I will expand this work to arbitrary model transformations.
-Any model that can be deterministically transformed must be deterministically specified; these deterministic specifications can be converted into abstract mathematical models. 
-In this framework, transformations then become functions mapping one model to another. 
-Formalizing modeling in this fashion allows us to apply a wealth of research on transforming mathematical structures. 
-</p>
-
-<img src="transformation.svg" alt="transformation diagram" width=100%>
-
-<p> <h3>Interests</h3>: Type Theory, Abstract Algebra, Category Theory, Programming Languages, Critical Infrastructure, Computational Intelligence, Algorithm Development and Analysis</p>
+<br>
 
 <h3>Writing</h3>
 <ul>
@@ -42,7 +27,41 @@ Formalizing modeling in this fashion allows us to apply a wealth of research on 
 	<li><b>CS 3800</b>: MWF 12:00-12:50 &amp; 13:00-13:50 </li>
 </ul>
 
-<h3>More about me</h3>
+<div style="clear:none">
+<p> <h3>Research</h3>: Abstract Interpretation of Cyber-Physical System Models</p>
+
+<center>
+<img src="abs-int.svg" alt="transformation diagram" width=75%>
+</center>
+
+<p>
+When designing or analyzing a complex system, several models of that system must be created and evaluated.
+Generating these models is a labor-intensive and error-prone process.
+Furthermore, as the system's architecture evolves through the design process, each model must be updated to reflect the latest changes.
+Model transformation tools can simplify this process by automating some or all of the model creation and update process.
+<p>
+
+<p>
+We view models as partial syntactic representations of a system, much as source code is a syntactic representation of a program.
+Through this lens, we can apply program analysis techniques to system analysis.
+Abstract Interpretation is one of these techniques.
+Originally developed as a static program analysis tool, Abstract Interpretation sidesteps the issue of the halting problem in program analysis
+by providing syntactic transformations between a program's source code and a properties domain that describes a property of the program we want to analyze.
+The transformation process is guaranteed to be correct, but it may sacrifice specificity in order to produce a result.
+For example, if we want to know whether a program outputs a negative or positive number, Abstract Interpretation may inform us that either outcome is possible.
+</p>
+
+<p>
+To transform models with Abstract Interpretation, we first define a properties domain
+that captures the relevant aspects of cyber-physical systems we are concerned with.
+Then we define transformation operations for each modeling domain we desire to operate on, allowing us to abstract system properties
+from these models and to concretize models from a given collection of system properties.
+This process can be proven to be correct; furthermore, we can improve the specificity of our results through the properties of
+the structures used in this transformation process.
+</p>
+
+
+<h3>Miscellany</h3>
 <ul>
 <li><a href="cv.pdf">Curriculum Vitae</a></li>
 <!--<li><a href="resume.pdf">Resume</a></li>-->
