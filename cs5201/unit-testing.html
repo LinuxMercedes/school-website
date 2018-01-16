@@ -20,6 +20,22 @@ so you can simply run <code>make test</code> to build and run your unit tests.
 Also, make sure that <code>make clean</code> cleans up any object files your unit tests produce.
 </p>
 
+<h3>Catch2</h3>
+
+<p><a href="https://github.com/catchorg/Catch2">Catch2</a> is a header-only unit test framework, so you can just download the header file, include it, and you're good to go.
+It has a different take on testing from how Boost and GTest work; it's similar to RSpec, if you know that tool.
+Most significantly, it doesn't use test fixtures&mdash;it has a different means of acheiving the same functionality.
+</p>
+
+<p>I find Catch2 to be much easier to use than Boost or GTest style testing.
+It also is designed to have more understandable compiler errors.
+</p>
+
+<p>Take a look at the <a href="https://github.com/catchorg/Catch2/blob/master/docs/tutorial.md#top">tutorial</a> to get started
+and the <a href="https://github.com/catchorg/Catch2/blob/master/docs/Readme.md#top">reference</a> for all the details.
+Furthermore, chapter 11 of the <a href="../cs1001/cs1001_prelab.pdf">CS 1001 Lab Book</a> covers Catch, and will be updated to Catch2 shortly.
+</p>
+
 <h3>GTest / Google Test</h3>
 
 <p>Google provides a unit testing framework that is generally considered to be very easy to use.
@@ -42,7 +58,7 @@ The example makefile builds GTest in a <code>gtest</code> subfolder&mdash;natura
 <p>Boost contains a unit test framework (UTF), because of course it does.
 The <a href="http://www.boost.org/doc/libs/1_39_0/libs/test/doc/html/index.html">documentation</a> is detailed, if a bit daunting.
 I found <a href="http://www.alittlemadness.com/2009/03/31/c-unit-testing-with-boosttest/">this tutorial</a> handy for getting started.
-There's also my <a href="http://web.mst.edu/~nmjxv3/cs1001/11-unit_testing.pdf">CS 1001 slides</a> that go along with the <a href="unit-testing/boost">example code</a>.
+There's also my <a href="../cs1001/archives/2016SP/11-unit_testing.pdf">CS 1001 slides</a> that go along with the <a href="unit-testing/boost">example code</a>.
 </p>
 
 <p>The general gist of unit testing with Boost is that you have a pile of assertions that check that various things are equal, not equal, etc.
@@ -64,17 +80,6 @@ That code can set up objects that your test cases can then use without needing t
 <p>In your individual test cpp files, I recommend you include just the prototypes for the UTF by using <code>#include&lt;boost/test/unit_test.hpp&gt;</code>.
 Then, make a <code>test_main.cpp</code> file that includes the UTF implementation; see the <a href="unit-testing/boost">example code</a>.
 This dramatically shortens the compile time for your tests!
-</p>
-
-<h3>Catch</h3>
-
-<p><a href="https://github.com/philsquared/Catch">Catch</a> is a header-only unit test framework, so you can just download the header file, include it, and you're good to go.
-It has a different take on testing from how Boost and GTest work; it's similar to RSpec, if you know that tool.
-Most significantly, it doesn't use test fixtures&mdash;it has a different means of acheiving the same functionality.
-</p>
-
-<p>If you use Catch, let me know if you like it or not!
-I haven't used it personally, so this is not the option I'd take if you aren't already familiar with unit testing since I won't be able to help much.
 </p>
 
 </body>
