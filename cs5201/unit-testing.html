@@ -10,8 +10,7 @@
 
 <p>
 Unit testing is a fantastic way to write bug-free code and to keep your code bug-free, even in big codebases.
-At S&amp;T, you have at least three choices for unit test frameworks.
-Most people prefer GTest; some of you know Boost UTF from my CS 1001 class, and Catch comes recommended from a friend who writes C++ for a living.
+At S&amp;T, you have at least three choices for unit test frameworks: Catch2, GTest, and Boost UTF.
 </p>
 
 <p>
@@ -24,7 +23,7 @@ Also, make sure that <code>make clean</code> cleans up any object files your uni
 
 <p><a href="https://github.com/catchorg/Catch2">Catch2</a> is a header-only unit test framework, so you can just download the header file, include it, and you're good to go.
 It has a different take on testing from how Boost and GTest work; it's similar to RSpec, if you know that tool.
-Most significantly, it doesn't use test fixtures&mdash;it has a different means of acheiving the same functionality.
+Most significantly, it doesn't use test fixtures&mdash;it has a different means of achieving the same functionality.
 </p>
 
 <p>I find Catch2 to be much easier to use than Boost or GTest style testing.
