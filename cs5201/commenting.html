@@ -11,8 +11,8 @@
 <p>
 As part of this course you are expected to produce high-quality documentation for the code you write.
 This documentation must include pre- and post-conditions for all member and friend functions.
-Part of the problem with documentation, like English grammar, is when you are taught it when you can't appreciate how important it is.
-This page explains the expectations for these documentations; they are liberally borrowed from the requirements of previous CS 5201 graders (Billy Rhoades and Nate Eloe).
+Part of the problem with documentation, like English grammar, is that when you are taught it, you don't know enough to appreciate how important it is.
+This page explains the expectations for your documentation; they are liberally borrowed from the requirements of previous CS 5201 graders (Billy Rhoades and Nate Eloe).
 </p>
 
 <h3>Preconditions</h3>
@@ -39,7 +39,7 @@ This page explains the expectations for these documentations; they are liberally
 		<li>Specify <b>invalid values</b> for input (example: if you divide by something, better put in that it may not be zero).</li>
 		<li>Specify any <b>valid ranges</b> for input (example: if your function will only work as expected for values 0, 1, and 2, specify that).</li>
 		<li>When dealing with templates, specify <b>specific</b> operations and operators that must be defined on the templated type(s) for the function to function.</li>
-		<li>Be descriptive about operators. "T must have -", OK, sure, but which -? Unary, binary? What does it have to be defined for? <code>T - U</code>, <code>T - double</code>?</li>
+		<li>Be descriptive about operators. "<code>T</code> must have <code>-</code>", OK, sure, but which <code>-</code>? Unary, binary? What does it have to be defined for? <code>T - U</code>, <code>T - double</code>?</li>
 		<li>When templated on several types, describe how those must be able to interact; e.g., <code>T * U</code> must be defined, or <code>Func(T)</code>.
 	</ul>
 
@@ -67,7 +67,7 @@ This page explains the expectations for these documentations; they are liberally
 		<li>"&lt;parameter&gt; must be a valid &lt;type&gt;".  WAY too ambiguous; what is valid? If any values are allowed, are you saying that what you pass in must be of type &lt;type&gt;? That's the compiler's job to check that for you.  Don't do this.</li>
 		<li>"&lt;parameter&gt; must be fully constructed."  If you manage to get into the function without fully constructed objects, your computer probably does not work like it should.  Objects are inherently constructed; if not, the program enters an error state (or should).</li>
 		<li>"&lt;parameter&gt; must have values".  It is the developer's responsibility to make sure the data they pass to your function is what they want it to be. Unless a certain value will cause your function to break, you may assume GIGO (garbage in, garbage out).</li>
-		<li>"user must pass menu option to function".  Just... no.  If it's not clear what your parameter is supposed to be, you should probably rename it to make sense.  Also, what happens if the user wants to use that function for a non-menu thing?</li>
+		<li>"user must pass menu option to function".  Just...no.  If it's not clear what your parameter is supposed to be, you should probably rename it to make sense.  Also, what happens if the user wants to use that function for a non-menu thing?</li>
 		<li>"&lt;parameter&gt; must be a double, float, or integer type".  If you do this (and your code is a template), what's the point of a template? Overload it or template specialize it.</li>
 		<li>"Class &lt;class you are currently implementing&gt; must exist".  You just implemented it.  It exists.  That's a given.</li>
 		<li>"The template parameter for the function must match the template parameter for the class". If you use the same template parameter name for both (e.g., <code>T</code>), then the compiler enforces this for you. If you did something fancy with a second template parameter, why bother with that if you're going to put this in the preconditions?</li>
@@ -90,14 +90,14 @@ So, let's do an example:
 </p>
 
 <p><pre>
-<span id="L1" class="LineNr"> 1 </span><span class="Comment">/// desc: compares the magnitude (square root of the sum of the squares</span>
+<span id="L1" class="LineNr"> 1 </span><span class="Comment">/// Compares the magnitude (square root of the sum of the squares</span>
 <span id="L2" class="LineNr"> 2 </span><span class="Comment">///       of the values) of the two vectors</span>
-<span id="L3" class="LineNr"> 3 </span><span class="Comment">/// pre:  ... see below</span>
-<span id="L4" class="LineNr"> 4 </span><span class="Comment">/// post: None</span>
-<span id="L5" class="LineNr"> 5 </span><span class="Comment">//</span>
+<span id="L3" class="LineNr"> 3 </span><span class="Comment">/// \pre  ...see below</span>
+<span id="L4" class="LineNr"> 4 </span><span class="Comment">/// \post None</span>
+<span id="L5" class="LineNr"> 5 </span><span class="Comment">///</span>
 <span id="L6" class="LineNr"> 6 </span><span class="Comment">/// ...bet you thought I made a mistake...</span>
-<span id="L7" class="LineNr"> 7 </span><span class="Comment">/// return: -1 if |vec1| &gt; |vec2|, 0 if |vec1| == |vec2|, 1 if |vec1| &gt; |vec2|</span>
-<span id="L8" class="LineNr"> 8 </span><span class="Comment">/// throws: std::domain_error if vec1.size() != vec2.size()</span>
+<span id="L7" class="LineNr"> 7 </span><span class="Comment">/// \return -1 if |vec1| &gt; |vec2|, 0 if |vec1| == |vec2|, 1 if |vec1| &gt; |vec2|</span>
+<span id="L8" class="LineNr"> 8 </span><span class="Comment">/// \throws std::domain_error if vec1.size() != vec2.size()</span>
 <span id="L9" class="LineNr"> 9 </span>
 <span id="L10" class="LineNr">10 </span><span class="Type">template</span> &lt;<span class="Type">class</span> T&gt;
 <span id="L11" class="LineNr">11 </span><span class="Type">int</span> compare_magnitude(<span class="Type">const</span> std::vector&lt;T&gt; vec1, <span class="Type">const</span> std::vector&lt;T&gt; vec2)
@@ -131,11 +131,11 @@ So, let's do an example:
 First, some good preconditions:
 
 <pre>
-<span id="L1" class="LineNr">1 </span><span class="Comment">// PRE: T * T (multiplication) defined, and results in type T (or is implicitly castable to T)</span>
-<span id="L2" class="LineNr">2 </span><span class="Comment">//      T += T (in place addition) defined</span>
-<span id="L3" class="LineNr">2 </span><span class="Comment">//      T &gt; T and T &lt; T (comparison) defined</span>
-<span id="L4" class="LineNr">3 </span><span class="Comment">//      std::sqrt(T) defined</span>
-<span id="L5" class="LineNr">4 </span><span class="Comment">//      vec1.size() == vec2.size()</span>
+<span id="L1" class="LineNr">1 </span><span class="Comment">/// \pre T * T (multiplication) defined, and results in type T (or is implicitly castable to T)</span>
+<span id="L2" class="LineNr">2 </span><span class="Comment">///      T += T (in place addition) defined</span>
+<span id="L3" class="LineNr">2 </span><span class="Comment">///      T &gt; T and T &lt; T (comparison) defined</span>
+<span id="L4" class="LineNr">3 </span><span class="Comment">///      std::sqrt(T) defined</span>
+<span id="L5" class="LineNr">4 </span><span class="Comment">///      vec1.size() == vec2.size()</span>
 </pre>
 </p>
 
@@ -198,7 +198,7 @@ Postconditions should:
 </p>
 
 <p>
-To clarify, I do consider the return documentation to be part of the postcondition.
+To clarify: I do consider the return documentation to be part of the postcondition.
 However, in general, if you have a non-const member function, there ought to be something in the postcondition in addition to the return documentation.
 (The exception to this rule is for animals like <code>T&amp; operator[](const int idx)</code> where the function is non-const because the return type allows the member variables to be modified elsewhere.)
 </p>
@@ -217,12 +217,11 @@ Post conditions should not:
 For example, here is a good pre/post block:
 
 <pre>
-<span id="L1" class="LineNr">1 </span><span class="Comment">/*</span><span class="Comment"> Scalar matrix multipication. Returns a copy of the result matrix.</span>
-<span id="L2" class="LineNr">2 </span><span class="Comment"> *</span>
-<span id="L3" class="LineNr">3 </span><span class="Comment"> * Pre: T::operator*=(T) must be defined.</span>
-<span id="L4" class="LineNr">4 </span><span class="Comment"> * Post: a copy of this matrix with each element multiplied by rhs is returned.</span>
-<span id="L5" class="LineNr">5 </span><span class="Comment"> </span><span class="Comment">*/</span>
-<span id="L6" class="LineNr">6 </span>DerivedMatrix&lt;T&gt; <span class="Operator">operator</span>*(<span class="Type">const</span> T rhs) <span class="Type">const</span>;
+<span id="L1" class="LineNr">1 </span><span class="Comment">///</span><span class="Comment"> Scalar matrix multiplication. Returns a copy of the result matrix.</span>
+<span id="L2" class="LineNr">2 </span><span class="Comment">///</span>
+<span id="L3" class="LineNr">3 </span><span class="Comment">/// \pre  T::operator*=(T) must be defined.</span>
+<span id="L4" class="LineNr">4 </span><span class="Comment">/// \post a copy of this matrix with each element multiplied by rhs is returned.</span>
+<span id="L5" class="LineNr">5 </span>DerivedMatrix&lt;T&gt; <span class="Operator">operator</span>*(<span class="Type">const</span> T rhs) <span class="Type">const</span>;
 </pre>
 
 <p>
@@ -230,7 +229,7 @@ Notice the explicit mention of the return method (copy) and what the return valu
 </p>
 
 <p>
-For completeness, I have included the only function that has a postcondition of none. Please note that the below code is &copy; 2017 Nathan Jarus and may not be used without express written permission.
+For completeness, I have included the only function that has a postcondition of none. Please note that the below code is &copy; 2017-2018 Nathan Jarus and may not be used without express written permission.
 
 <pre>
 <span id="L1" class="LineNr">1 </span><span class="Type">void</span> do_nothing() { <span class="Statement">return</span>; }
