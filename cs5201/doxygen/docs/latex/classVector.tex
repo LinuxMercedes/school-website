@@ -1,5 +1,5 @@
-\hypertarget{classVector}{}\section{Vector$<$ T $>$ Class Template Reference}
-\label{classVector}\index{Vector$<$ T $>$@{Vector$<$ T $>$}}
+\hypertarget{classVector}{}\section{Vector$<$ F\+UN $>$ Class Template Reference}
+\label{classVector}\index{Vector$<$ F\+U\+N $>$@{Vector$<$ F\+U\+N $>$}}
 
 
 A (very neat) vector.  
@@ -12,43 +12,43 @@ A (very neat) vector.
 \subsection*{Public Member Functions}
 \begin{DoxyCompactItemize}
 \item 
-\hyperlink{classVector_a39d6069675db4ecfc1ab81d440da759a}{Vector} ()
+\hyperlink{classVector_a194c6782f240165dc863402fe4749146}{Vector} ()
 \begin{DoxyCompactList}\small\item\em Constructs an empty vector. \end{DoxyCompactList}\item 
-\hyperlink{classVector_aa1671acb623cf2259dd60cf81db4f56a}{Vector} (const \hyperlink{classVector}{Vector}$<$ T $>$ \&v)
+\hyperlink{classVector_aff6118a543c759563742b161901f9afa}{Vector} (const \hyperlink{classVector}{Vector}$<$ F\+UN $>$ \&v)
 \begin{DoxyCompactList}\small\item\em Copy Constructor. \end{DoxyCompactList}\item 
-\mbox{\Hypertarget{classVector_afd524fac19e6d3d69db5198ffe2952b0}\label{classVector_afd524fac19e6d3d69db5198ffe2952b0}} 
-\hyperlink{classVector_afd524fac19e6d3d69db5198ffe2952b0}{$\sim$\+Vector} ()
+\mbox{\Hypertarget{classVector_ac4d0b4dac40851353105af00b8cc6698}\label{classVector_ac4d0b4dac40851353105af00b8cc6698}} 
+\hyperlink{classVector_ac4d0b4dac40851353105af00b8cc6698}{$\sim$\+Vector} ()
 \begin{DoxyCompactList}\small\item\em Destructor. \end{DoxyCompactList}\item 
-void \hyperlink{classVector_a31c38ed12e608a4e950391c7f3dfc114}{push\+\_\+back} (T v)
+void \hyperlink{classVector_a5fec15adc006c9cc934664fe79ba50b9}{push\+\_\+back} (F\+UN v)
 \begin{DoxyCompactList}\small\item\em Add elements to the vector. \end{DoxyCompactList}\item 
-T \& \hyperlink{classVector_a6cf5a211415fd74a49d37c7ffe8f7d78}{operator\mbox{[}$\,$\mbox{]}} (const unsigned int idx)
+F\+UN \& \hyperlink{classVector_a4c61dff267d82d1e33aebded9d40e489}{operator\mbox{[}$\,$\mbox{]}} (const unsigned int idx)
 \begin{DoxyCompactList}\small\item\em Reads an element of the vector. \end{DoxyCompactList}\item 
-unsigned int \hyperlink{classVector_af15b2f88e9cc1f54cdb2759db37c13c2}{length} () const
+unsigned int \hyperlink{classVector_ab89f11fa1d0aadc25484f4971f16f38a}{length} () const
 \begin{DoxyCompactList}\small\item\em The number of items stored in the vector. \end{DoxyCompactList}\item 
-unsigned int \hyperlink{classVector_a5214a382564aedc712b609416aa3b7b1}{size} () const
+unsigned int \hyperlink{classVector_a21b80c989eadd6dfa49f2c01e53abd35}{size} () const
 \begin{DoxyCompactList}\small\item\em The size of the underlying storage. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
-\subsubsection*{template$<$class T$>$\newline
-class Vector$<$ T $>$}
+\subsubsection*{template$<$class F\+UN$>$\newline
+class Vector$<$ F\+U\+N $>$}
 
 A (very neat) vector. 
 
-It\textquotesingle{}s a vector. You put stuff in it, you get stuff out of it, that\textquotesingle{}s about it.
+It\textquotesingle{}s a vector. You put stuff into it, you get stuff out of it, that\textquotesingle{}s about it.
 
 \begin{DoxyPrecond}{Precondition}
-T must support assignment (T = T) 
+F\+UN must support assignment (F\+UN = F\+UN) 
 \end{DoxyPrecond}
 
 
 \subsection{Constructor \& Destructor Documentation}
-\mbox{\Hypertarget{classVector_a39d6069675db4ecfc1ab81d440da759a}\label{classVector_a39d6069675db4ecfc1ab81d440da759a}} 
+\mbox{\Hypertarget{classVector_a194c6782f240165dc863402fe4749146}\label{classVector_a194c6782f240165dc863402fe4749146}} 
 \index{Vector@{Vector}!Vector@{Vector}}
 \index{Vector@{Vector}!Vector@{Vector}}
 \subsubsection{\texorpdfstring{Vector()}{Vector()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
-{\footnotesize\ttfamily template$<$class T $>$ \\
-\hyperlink{classVector}{Vector}$<$ T $>$\+::\hyperlink{classVector}{Vector} (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily template$<$class F\+UN $>$ \\
+\hyperlink{classVector}{Vector}$<$ F\+UN $>$\+::\hyperlink{classVector}{Vector} (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
 
 
 
@@ -57,12 +57,12 @@ Constructs an empty vector.
 \begin{DoxyPostcond}{Postcondition}
 The underlying storage is allocated with 4 elements. 
 \end{DoxyPostcond}
-\mbox{\Hypertarget{classVector_aa1671acb623cf2259dd60cf81db4f56a}\label{classVector_aa1671acb623cf2259dd60cf81db4f56a}} 
+\mbox{\Hypertarget{classVector_aff6118a543c759563742b161901f9afa}\label{classVector_aff6118a543c759563742b161901f9afa}} 
 \index{Vector@{Vector}!Vector@{Vector}}
 \index{Vector@{Vector}!Vector@{Vector}}
 \subsubsection{\texorpdfstring{Vector()}{Vector()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
-{\footnotesize\ttfamily template$<$class T $>$ \\
-\hyperlink{classVector}{Vector}$<$ T $>$\+::\hyperlink{classVector}{Vector} (\begin{DoxyParamCaption}\item[{const \hyperlink{classVector}{Vector}$<$ T $>$ \&}]{v }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily template$<$class F\+UN $>$ \\
+\hyperlink{classVector}{Vector}$<$ F\+UN $>$\+::\hyperlink{classVector}{Vector} (\begin{DoxyParamCaption}\item[{const \hyperlink{classVector}{Vector}$<$ F\+UN $>$ \&}]{v }\end{DoxyParamCaption})}
 
 
 
@@ -74,12 +74,12 @@ Creates a new vector with copies of elements from v and underlying storage size 
 
 
 \subsection{Member Function Documentation}
-\mbox{\Hypertarget{classVector_af15b2f88e9cc1f54cdb2759db37c13c2}\label{classVector_af15b2f88e9cc1f54cdb2759db37c13c2}} 
+\mbox{\Hypertarget{classVector_ab89f11fa1d0aadc25484f4971f16f38a}\label{classVector_ab89f11fa1d0aadc25484f4971f16f38a}} 
 \index{Vector@{Vector}!length@{length}}
 \index{length@{length}!Vector@{Vector}}
 \subsubsection{\texorpdfstring{length()}{length()}}
-{\footnotesize\ttfamily template$<$class T $>$ \\
-unsigned int \hyperlink{classVector}{Vector}$<$ T $>$\+::length (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+{\footnotesize\ttfamily template$<$class F\+UN $>$ \\
+unsigned int \hyperlink{classVector}{Vector}$<$ F\+UN $>$\+::length (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
 
 
 
@@ -88,12 +88,12 @@ The number of items stored in the vector.
 \begin{DoxyReturn}{Returns}
 the number of items stored in the vector. 
 \end{DoxyReturn}
-\mbox{\Hypertarget{classVector_a6cf5a211415fd74a49d37c7ffe8f7d78}\label{classVector_a6cf5a211415fd74a49d37c7ffe8f7d78}} 
+\mbox{\Hypertarget{classVector_a4c61dff267d82d1e33aebded9d40e489}\label{classVector_a4c61dff267d82d1e33aebded9d40e489}} 
 \index{Vector@{Vector}!operator\mbox{[}\mbox{]}@{operator[]}}
 \index{operator\mbox{[}\mbox{]}@{operator[]}!Vector@{Vector}}
 \subsubsection{\texorpdfstring{operator[]()}{operator[]()}}
-{\footnotesize\ttfamily template$<$class T $>$ \\
-T \& \hyperlink{classVector}{Vector}$<$ T $>$\+::operator\mbox{[}$\,$\mbox{]} (\begin{DoxyParamCaption}\item[{const unsigned int}]{idx }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily template$<$class F\+UN $>$ \\
+F\+UN \& \hyperlink{classVector}{Vector}$<$ F\+UN $>$\+::operator\mbox{[}$\,$\mbox{]} (\begin{DoxyParamCaption}\item[{const unsigned int}]{idx }\end{DoxyParamCaption})}
 
 
 
@@ -108,19 +108,19 @@ Reads an element of the vector.
 The element at position idx is returned.
 \end{DoxyReturn}
 \begin{DoxyPrecond}{Precondition}
-idx is within the range \mbox{[}0, \hyperlink{classVector_af15b2f88e9cc1f54cdb2759db37c13c2}{length()}). 
+idx is within the range \mbox{[}0, \hyperlink{classVector_ab89f11fa1d0aadc25484f4971f16f38a}{length()}). 
 \end{DoxyPrecond}
 
 \begin{DoxyExceptions}{Exceptions}
 {\em std\+::invalid\+\_\+argument} & is thrown if idx is out of range. \\
 \hline
 \end{DoxyExceptions}
-\mbox{\Hypertarget{classVector_a31c38ed12e608a4e950391c7f3dfc114}\label{classVector_a31c38ed12e608a4e950391c7f3dfc114}} 
+\mbox{\Hypertarget{classVector_a5fec15adc006c9cc934664fe79ba50b9}\label{classVector_a5fec15adc006c9cc934664fe79ba50b9}} 
 \index{Vector@{Vector}!push\+\_\+back@{push\+\_\+back}}
 \index{push\+\_\+back@{push\+\_\+back}!Vector@{Vector}}
 \subsubsection{\texorpdfstring{push\+\_\+back()}{push\_back()}}
-{\footnotesize\ttfamily template$<$class T $>$ \\
-void \hyperlink{classVector}{Vector}$<$ T $>$\+::push\+\_\+back (\begin{DoxyParamCaption}\item[{T}]{v }\end{DoxyParamCaption})}
+{\footnotesize\ttfamily template$<$class F\+UN $>$ \\
+void \hyperlink{classVector}{Vector}$<$ F\+UN $>$\+::push\+\_\+back (\begin{DoxyParamCaption}\item[{F\+UN}]{v }\end{DoxyParamCaption})}
 
 
 
@@ -132,12 +132,12 @@ None.
 \begin{DoxyPostcond}{Postcondition}
 The element is added to the end of the vector. If need be, the size of the underlying storage is doubled. 
 \end{DoxyPostcond}
-\mbox{\Hypertarget{classVector_a5214a382564aedc712b609416aa3b7b1}\label{classVector_a5214a382564aedc712b609416aa3b7b1}} 
+\mbox{\Hypertarget{classVector_a21b80c989eadd6dfa49f2c01e53abd35}\label{classVector_a21b80c989eadd6dfa49f2c01e53abd35}} 
 \index{Vector@{Vector}!size@{size}}
 \index{size@{size}!Vector@{Vector}}
 \subsubsection{\texorpdfstring{size()}{size()}}
-{\footnotesize\ttfamily template$<$class T $>$ \\
-unsigned int \hyperlink{classVector}{Vector}$<$ T $>$\+::size (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+{\footnotesize\ttfamily template$<$class F\+UN $>$ \\
+unsigned int \hyperlink{classVector}{Vector}$<$ F\+UN $>$\+::size (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
 
 
 

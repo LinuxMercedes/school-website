@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>CS 5201: Using Doxygen</title>
+<link href="../style.css" type="text/css" rel="stylesheet">
+</head>
+<body>
+	<div><a href="..">Home</a> <a href=".">CS 5201</a><hr></div>
+<h2>CS 5201: Using Doxygen</h2>
+
+<p>This semester, every programming assignment in this class (read: every assignment except the first) must be documented using
+<a href="http://www.stack.nl/~dimitri/doxygen/">Doxygen</a>.
+Doxygen is a tool that takes properly-formatted comments and produces documentation in a variety of formats, including HTML and LaTeX.
+This documentation is pleasing to the eye, makes working with large libraries less painful, clears up various skin blemishes, and adds years to your life!
+Furthermore, it provides a bit of structure to commenting, which will help you develop a sense for what you ought to be including in your comments.
+<a href="doxygen/docs/html/classVector.html">This example</a> shows what the HTML documentation looks like.
+</p>
+
+
+<h3>Homework Requirements</h3>
+
+<p>
+<ol>
+	<li>Your submission <b>must</b> include a Doxygen configuration file named <code>Doxyfile</code>.</li>
+	<li>Every class and member function <b>must</b> be documented.</li>
+</ol>
+For advice on writing documentation, see the page on <a href="commenting.html">pre- and post-conditions</a>.
+</p>
+
+<h3>Using Doxygen</h3>
+
+<p>Doxygen requires a configuration file in order to know how you want your documentation to be generated.
+Run <code>doxygen -g</code> in your homework directory to generate a default configuration.
+You should edit this at least a little bit; here's what I changed:
+<ul>
+	<li><code>PROJECT_NAME</code> Put a lil' pizzazz in your documentation for heaven's sake!</li>
+	<li><code>OUTPUT_DIRECTORY</code> Set this to <code>docs</code> so Doxygen doesn't clutter things up with generated files.</li>
+	<li><code>QUIET</code> Set this to <code>YES</code> so Doxygen doesn't get too chatty.</li>
+	<li><code>*_AUTOBRIEF</code> This is personal taste, but
+		<a href="http://www.stack.nl/~dimitri/doxygen/manual/config.html#cfg_javadoc_autobrief">autobrief</a>
+		is pretty nice.
+	</li>
+</ul>
+
+Also, <b>do not touch</b> the <code>WARNINGS</code> setting! Instead, write docs so that you don't get any warnings in the first place.
+</p>
+
+<p>Once you've generated a configuration, you'll want to write comments in your source code that Doxygen understands.
+For the most part, they'll be exactly how you'd write them normally, but with two caveats:
+<ol>
+	<li>You'll need to use a <a href="http://www.stack.nl/~dimitri/doxygen/manual/docblocks.html">comment block</a> that Doxygen knows
+		to look for documentation in.
+	</li>
+	<li>You'll need to include <a href="http://www.stack.nl/~dimitri/doxygen/manual/commands.html">commands</a> indicating things like
+		preconditions, postconditions, parameters, return values, and thrown exceptions.
+	</li>
+</ol>
+</p>
+
+<p>Finally, you need to actually generate your documentation. Run <code>doxygen Doxyfile</code> to do so.</p>
+
+<p>See <a href="doxygen">the example code</a> for a good starting point, including a reasonable config file.
+If you have further questions, see <a href="http://www.stack.nl/~dimitri/doxygen/manual/index.html">the Doxygen manual</a>
+or ask <a href="https://thenypost.files.wordpress.com/2014/11/the_graduate.jpg">your loving TA</a>.
+(If you don't have a loving TA, you can ask me instead.)
+</p>
+
+</body>
+</html>

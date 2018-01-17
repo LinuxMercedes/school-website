@@ -1,19 +1,19 @@
 // Constructor
-template<class T>
-Vector<T>::Vector()
+template<class FUN>
+Vector<FUN>::Vector()
 {
   sz = 4;
   max = 0;
-  array = new T[4];
+  array = new FUN[4];
 }
 
 // Copy Constructor
-template<class T>
-Vector<T>::Vector(const Vector<T>& v)
+template<class FUN>
+Vector<FUN>::Vector(const Vector<FUN>& v)
 {
   sz = v.sz;
   max = v.max;
-  array = new T[sz];
+  array = new FUN[sz];
   for(unsigned int i = 0; i < max; i++)
   {
     array[i] = v.array[i];
@@ -21,21 +21,21 @@ Vector<T>::Vector(const Vector<T>& v)
 }
 
 // Destructor
-template<class T>
-Vector<T>::~Vector()
+template<class FUN>
+Vector<FUN>::~Vector()
 {
   delete [] array;
 }
 
 // Add elements to the vector
-template<class T>
-void Vector<T>::push_back(T v)
+template<class FUN>
+void Vector<FUN>::push_back(FUN v)
 {
   // Expand vector if needed
   if(max == sz)
   {
     sz = sz * 2;
-    T* new_array = new T[sz];
+    FUN* new_array = new FUN[sz];
     for(unsigned int i = 0; i < max; i++)
     {
       new_array[i] = array[i];
@@ -50,8 +50,8 @@ void Vector<T>::push_back(T v)
 }
 
 // Read elements of the vector
-template<class T>
-T& Vector<T>::operator[](const unsigned int idx)
+template<class FUN>
+FUN& Vector<FUN>::operator[](const unsigned int idx)
 {
   if(idx < 0 || idx >= max)
   {
@@ -62,15 +62,15 @@ T& Vector<T>::operator[](const unsigned int idx)
 }
 
 // length getter
-template<class T>
-unsigned int Vector<T>::length() const
+template<class FUN>
+unsigned int Vector<FUN>::length() const
 {
   return max;
 }
 
 // size getter
-template<class T>
-unsigned int Vector<T>::size() const
+template<class FUN>
+unsigned int Vector<FUN>::size() const
 {
   return sz;
 }

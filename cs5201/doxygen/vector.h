@@ -6,11 +6,11 @@ using namespace std;
 
 /*! A (very neat) vector.
  *
- * It's a vector. You put stuff in it, you get stuff out of it, that's about it.
+ * It's a vector. You put stuff into it, you get stuff out of it, that's about it.
  *
- * \pre T must support assignment (T = T)
+ * \pre FUN must support assignment (FUN = FUN)
  */
-template<class T>
+template<class FUN>
 class Vector
 {
   public:
@@ -25,7 +25,7 @@ class Vector
      * \post Creates a new vector with copies of elements from v
      *       and underlying storage size equal to that of v's storage.
      */
-    Vector(const Vector<T>& v);
+    Vector(const Vector<FUN>& v);
 
     //! Destructor
     ~Vector();
@@ -36,7 +36,7 @@ class Vector
      * \post The element is added to the end of the vector.
      *       If need be, the size of the underlying storage is doubled.
      */
-    void push_back(T v);
+    void push_back(FUN v);
 
     /*! Reads an element of the vector.
      *
@@ -46,7 +46,7 @@ class Vector
      * \pre idx is within the range [0, length()).
      * \throws std::invalid_argument is thrown if idx is out of range.
      */
-    T& operator[](const unsigned int idx);
+    FUN& operator[](const unsigned int idx);
 
     /*! The number of items stored in the vector.
      *
@@ -63,7 +63,7 @@ class Vector
   private:
     unsigned int sz;
     unsigned int max;
-    T* array;
+    FUN* array;
 };
 
 #include"vector.hpp"
