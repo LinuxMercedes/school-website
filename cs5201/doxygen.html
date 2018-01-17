@@ -35,7 +35,7 @@ For advice on writing documentation, see the page on <a href="commenting.html">p
 Run <code>doxygen -g</code> in your homework directory to generate a default configuration.
 You should edit this at least a little bit; here's what I changed:
 <ul>
-	<li><code>PROJECT_NAME</code> Put a lil' pizzazz in your documentation for heaven's sake!</li>
+	<li><code>PROJECT_NAME</code> Put a li'l pizzazz in your documentation for heaven's sake!</li>
 	<li><code>OUTPUT_DIRECTORY</code> Set this to <code>docs</code> so Doxygen doesn't clutter things up with generated files.</li>
 	<li><code>QUIET</code> Set this to <code>YES</code> so Doxygen doesn't get too chatty.</li>
 	<li><code>*_AUTOBRIEF</code> This is personal taste, but
@@ -50,8 +50,8 @@ Also, <b>do not touch</b> the <code>WARNINGS</code> setting! Instead, write docs
 <p>Once you've generated a configuration, you'll want to write comments in your source code that Doxygen understands.
 For the most part, they'll be exactly how you'd write them normally, but with two caveats:
 <ol>
-	<li>You'll need to use a <a href="http://www.stack.nl/~dimitri/doxygen/manual/docblocks.html">comment block</a> that Doxygen knows
-		to look for documentation in.
+	<li>You'll need to use a <a href="http://www.stack.nl/~dimitri/doxygen/manual/docblocks.html">comment block</a>
+		that Doxygen recognizes as documentation.
 	</li>
 	<li>You'll need to include <a href="http://www.stack.nl/~dimitri/doxygen/manual/commands.html">commands</a> indicating things like
 		preconditions, postconditions, parameters, return values, and thrown exceptions.
@@ -59,7 +59,7 @@ For the most part, they'll be exactly how you'd write them normally, but with tw
 </ol>
 </p>
 
-<p>Finally, you need to actually generate your documentation. Run <code>doxygen Doxyfile</code> to do so.</p>
+<p>Finally, you'll need to actually generate your documentation. Run <code>doxygen Doxyfile</code> to do so.</p>
 
 <p>See <a href="doxygen">the example code</a> for a good starting point, including a reasonable config file.
 If you have further questions, see <a href="http://www.stack.nl/~dimitri/doxygen/manual/index.html">the Doxygen manual</a>
