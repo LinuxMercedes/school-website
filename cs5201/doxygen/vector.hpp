@@ -75,3 +75,21 @@ unsigned int Vector<FUN>::size() const
   return sz;
 }
 
+template<class FUN>
+ostream& operator<<(ostream& out, const Vector<FUN>^& v)
+{
+  out << "[";
+
+  // if v.size() == 0 then v.size() - 1 underflows
+  if(v.size() > 0)
+  {
+    for(unsigned int i = 0; i < v.size() - 1; i++)
+    {
+      out << v[i] << ", ";
+    }
+    out << v[v.size() - 1];
+  }
+
+  out << "]";
+  return out;
+}

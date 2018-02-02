@@ -1,8 +1,15 @@
+/*! \file
+ *
+ * A Vector library.
+ */
+
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include<stdexcept> // for invalid_argument
-using namespace std;
+#include<stdexcept>
+using std::invalid_argument;
+#include<iostream>
+using std::ostream;
 
 /*! A (very neat) vector.
  *
@@ -65,6 +72,15 @@ class Vector
     unsigned int max;
     FUN* array;
 };
+
+/*! Stream insertion operator for `Vector`
+ *
+ * \pre Stream insertion operator is defined for `FUN`.
+ * \post The contents of the vector are printed to the ouptut stream.
+ * \return the modified output stream.
+ */
+template<class FUN>
+ostream& operator<<(ostream& out, const Vector<FUN>^& v);
 
 #include"vector.hpp"
 #endif
