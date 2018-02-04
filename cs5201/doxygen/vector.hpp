@@ -61,6 +61,18 @@ FUN& Vector<FUN>::operator[](const unsigned int idx)
   return array[idx];
 }
 
+// Read elements of the vector
+template<class FUN>
+const FUN& Vector<FUN>::operator[](const unsigned int idx) const
+{
+  if(idx < 0 || idx >= max)
+  {
+    throw invalid_argument("Index out of range");
+  }
+
+  return array[idx];
+}
+
 // length getter
 template<class FUN>
 unsigned int Vector<FUN>::length() const
@@ -76,18 +88,18 @@ unsigned int Vector<FUN>::size() const
 }
 
 template<class FUN>
-ostream& operator<<(ostream& out, const Vector<FUN>^& v)
+ostream& operator<<(ostream& out, const Vector<FUN>& v)
 {
   out << "[";
 
   // if v.size() == 0 then v.size() - 1 underflows
-  if(v.size() > 0)
+  if(v.length() > 0)
   {
-    for(unsigned int i = 0; i < v.size() - 1; i++)
+    for(unsigned int i = 0; i < v.length() - 1; i++)
     {
       out << v[i] << ", ";
     }
-    out << v[v.size() - 1];
+    out << v[v.length() - 1];
   }
 
   out << "]";

@@ -62,6 +62,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#related">Related Functions</a> &#124;
 <a href="classVector-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">Vector&lt; FUN &gt; Class Template Reference</div>  </div>
@@ -91,12 +92,24 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a4c61dff267d82d1e33aebded9d40e489"><td class="memItemLeft" align="right" valign="top">FUN &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVector.html#a4c61dff267d82d1e33aebded9d40e489">operator[]</a> (const unsigned int idx)</td></tr>
 <tr class="memdesc:a4c61dff267d82d1e33aebded9d40e489"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads an element of the vector.  <a href="#a4c61dff267d82d1e33aebded9d40e489">More...</a><br /></td></tr>
 <tr class="separator:a4c61dff267d82d1e33aebded9d40e489"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e0e1eb0aea867284f13efb6bc21f2bf"><td class="memItemLeft" align="right" valign="top">const FUN &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVector.html#a3e0e1eb0aea867284f13efb6bc21f2bf">operator[]</a> (const unsigned int idx) const</td></tr>
+<tr class="memdesc:a3e0e1eb0aea867284f13efb6bc21f2bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reads an element of the vector.  <a href="#a3e0e1eb0aea867284f13efb6bc21f2bf">More...</a><br /></td></tr>
+<tr class="separator:a3e0e1eb0aea867284f13efb6bc21f2bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab89f11fa1d0aadc25484f4971f16f38a"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVector.html#ab89f11fa1d0aadc25484f4971f16f38a">length</a> () const</td></tr>
 <tr class="memdesc:ab89f11fa1d0aadc25484f4971f16f38a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The number of items stored in the vector.  <a href="#ab89f11fa1d0aadc25484f4971f16f38a">More...</a><br /></td></tr>
 <tr class="separator:ab89f11fa1d0aadc25484f4971f16f38a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a21b80c989eadd6dfa49f2c01e53abd35"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classVector.html#a21b80c989eadd6dfa49f2c01e53abd35">size</a> () const</td></tr>
 <tr class="memdesc:a21b80c989eadd6dfa49f2c01e53abd35"><td class="mdescLeft">&#160;</td><td class="mdescRight">The size of the underlying storage.  <a href="#a21b80c989eadd6dfa49f2c01e53abd35">More...</a><br /></td></tr>
 <tr class="separator:a21b80c989eadd6dfa49f2c01e53abd35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="related"></a>
+Related Functions</h2></td></tr>
+<tr><td class="ititle" colspan="2"><p>(Note that these are not member functions.) </p>
+</td></tr>
+<tr class="memitem:acdb80390f6795111ddcd4ab48dc902b2"><td class="memTemplParams" colspan="2">template&lt;class FUN &gt; </td></tr>
+<tr class="memitem:acdb80390f6795111ddcd4ab48dc902b2"><td class="memTemplItemLeft" align="right" valign="top">ostream &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classVector.html#acdb80390f6795111ddcd4ab48dc902b2">operator&lt;&lt;</a> (ostream &amp;out, const <a class="el" href="classVector.html">Vector</a>&lt; FUN &gt; &amp;v)</td></tr>
+<tr class="memdesc:acdb80390f6795111ddcd4ab48dc902b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stream insertion operator for <code><a class="el" href="classVector.html" title="A (very neat) vector. ">Vector</a></code>.  <a href="#acdb80390f6795111ddcd4ab48dc902b2">More...</a><br /></td></tr>
+<tr class="separator:acdb80390f6795111ddcd4ab48dc902b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;class FUN&gt;<br />
@@ -175,7 +188,7 @@ template&lt;class FUN &gt; </div>
 </div>
 </div>
 <a id="a4c61dff267d82d1e33aebded9d40e489"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4c61dff267d82d1e33aebded9d40e489">&#9670;&nbsp;</a></span>operator[]()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a4c61dff267d82d1e33aebded9d40e489">&#9670;&nbsp;</a></span>operator[]() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -188,6 +201,42 @@ template&lt;class FUN &gt; </div>
           <td class="paramtype">const unsigned int&#160;</td>
           <td class="paramname"><em>idx</em></td><td>)</td>
           <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reads an element of the vector. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">idx</td><td>the index of the element to read. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The element at position idx is returned.</dd></dl>
+<dl class="section pre"><dt>Precondition</dt><dd>idx is within the range [0, <a class="el" href="classVector.html#ab89f11fa1d0aadc25484f4971f16f38a" title="The number of items stored in the vector. ">length()</a>). </dd></dl>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">std::invalid_argument</td><td>is thrown if idx is out of range. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a3e0e1eb0aea867284f13efb6bc21f2bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e0e1eb0aea867284f13efb6bc21f2bf">&#9670;&nbsp;</a></span>operator[]() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class FUN &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">const FUN &amp; <a class="el" href="classVector.html">Vector</a>&lt; FUN &gt;::operator[] </td>
+          <td>(</td>
+          <td class="paramtype">const unsigned int&#160;</td>
+          <td class="paramname"><em>idx</em></td><td>)</td>
+          <td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -253,6 +302,50 @@ template&lt;class FUN &gt; </div>
 
 <p>The size of the underlying storage. </p>
 <dl class="section return"><dt>Returns</dt><dd>the size of the underlying storage. </dd></dl>
+
+</div>
+</div>
+<h2 class="groupheader">Friends And Related Function Documentation</h2>
+<a id="acdb80390f6795111ddcd4ab48dc902b2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acdb80390f6795111ddcd4ab48dc902b2">&#9670;&nbsp;</a></span>operator<<()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class FUN &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">ostream &amp; operator&lt;&lt; </td>
+          <td>(</td>
+          <td class="paramtype">ostream &amp;&#160;</td>
+          <td class="paramname"><em>out</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="classVector.html">Vector</a>&lt; FUN &gt; &amp;&#160;</td>
+          <td class="paramname"><em>v</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">related</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Stream insertion operator for <code><a class="el" href="classVector.html" title="A (very neat) vector. ">Vector</a></code>. </p>
+<dl class="section pre"><dt>Precondition</dt><dd>Stream insertion operator is defined for <code>FUN</code>. </dd></dl>
+<dl class="section post"><dt>Postcondition</dt><dd>The contents of the vector are printed to the ouptut stream. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>the modified output stream. </dd></dl>
 
 </div>
 </div>

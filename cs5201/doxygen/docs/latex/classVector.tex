@@ -23,10 +23,17 @@ void \hyperlink{classVector_a5fec15adc006c9cc934664fe79ba50b9}{push\+\_\+back} (
 \begin{DoxyCompactList}\small\item\em Add elements to the vector. \end{DoxyCompactList}\item 
 F\+UN \& \hyperlink{classVector_a4c61dff267d82d1e33aebded9d40e489}{operator\mbox{[}$\,$\mbox{]}} (const unsigned int idx)
 \begin{DoxyCompactList}\small\item\em Reads an element of the vector. \end{DoxyCompactList}\item 
+const F\+UN \& \hyperlink{classVector_a3e0e1eb0aea867284f13efb6bc21f2bf}{operator\mbox{[}$\,$\mbox{]}} (const unsigned int idx) const
+\begin{DoxyCompactList}\small\item\em Reads an element of the vector. \end{DoxyCompactList}\item 
 unsigned int \hyperlink{classVector_ab89f11fa1d0aadc25484f4971f16f38a}{length} () const
 \begin{DoxyCompactList}\small\item\em The number of items stored in the vector. \end{DoxyCompactList}\item 
 unsigned int \hyperlink{classVector_a21b80c989eadd6dfa49f2c01e53abd35}{size} () const
 \begin{DoxyCompactList}\small\item\em The size of the underlying storage. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Related Functions}
+(Note that these are not member functions.) \begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$class F\+UN $>$ }\\ostream \& \hyperlink{classVector_acdb80390f6795111ddcd4ab48dc902b2}{operator$<$$<$} (ostream \&out, const \hyperlink{classVector}{Vector}$<$ F\+UN $>$ \&v)
+\begin{DoxyCompactList}\small\item\em Stream insertion operator for {\ttfamily \hyperlink{classVector}{Vector}}. \end{DoxyCompactList}\end{DoxyCompactItemize}
 
 
 \subsection{Detailed Description}
@@ -91,9 +98,36 @@ the number of items stored in the vector.
 \mbox{\Hypertarget{classVector_a4c61dff267d82d1e33aebded9d40e489}\label{classVector_a4c61dff267d82d1e33aebded9d40e489}} 
 \index{Vector@{Vector}!operator\mbox{[}\mbox{]}@{operator[]}}
 \index{operator\mbox{[}\mbox{]}@{operator[]}!Vector@{Vector}}
-\subsubsection{\texorpdfstring{operator[]()}{operator[]()}}
+\subsubsection{\texorpdfstring{operator[]()}{operator[]()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
 {\footnotesize\ttfamily template$<$class F\+UN $>$ \\
 F\+UN \& \hyperlink{classVector}{Vector}$<$ F\+UN $>$\+::operator\mbox{[}$\,$\mbox{]} (\begin{DoxyParamCaption}\item[{const unsigned int}]{idx }\end{DoxyParamCaption})}
+
+
+
+Reads an element of the vector. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em idx} & the index of the element to read. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The element at position idx is returned.
+\end{DoxyReturn}
+\begin{DoxyPrecond}{Precondition}
+idx is within the range \mbox{[}0, \hyperlink{classVector_ab89f11fa1d0aadc25484f4971f16f38a}{length()}). 
+\end{DoxyPrecond}
+
+\begin{DoxyExceptions}{Exceptions}
+{\em std\+::invalid\+\_\+argument} & is thrown if idx is out of range. \\
+\hline
+\end{DoxyExceptions}
+\mbox{\Hypertarget{classVector_a3e0e1eb0aea867284f13efb6bc21f2bf}\label{classVector_a3e0e1eb0aea867284f13efb6bc21f2bf}} 
+\index{Vector@{Vector}!operator\mbox{[}\mbox{]}@{operator[]}}
+\index{operator\mbox{[}\mbox{]}@{operator[]}!Vector@{Vector}}
+\subsubsection{\texorpdfstring{operator[]()}{operator[]()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily template$<$class F\+UN $>$ \\
+const F\+UN \& \hyperlink{classVector}{Vector}$<$ F\+UN $>$\+::operator\mbox{[}$\,$\mbox{]} (\begin{DoxyParamCaption}\item[{const unsigned int}]{idx }\end{DoxyParamCaption}) const}
 
 
 
@@ -145,6 +179,29 @@ The size of the underlying storage.
 
 \begin{DoxyReturn}{Returns}
 the size of the underlying storage. 
+\end{DoxyReturn}
+
+
+\subsection{Friends And Related Function Documentation}
+\mbox{\Hypertarget{classVector_acdb80390f6795111ddcd4ab48dc902b2}\label{classVector_acdb80390f6795111ddcd4ab48dc902b2}} 
+\index{Vector@{Vector}!operator$<$$<$@{operator$<$$<$}}
+\index{operator$<$$<$@{operator$<$$<$}!Vector@{Vector}}
+\subsubsection{\texorpdfstring{operator$<$$<$()}{operator<<()}}
+{\footnotesize\ttfamily template$<$class F\+UN $>$ \\
+ostream \& operator$<$$<$ (\begin{DoxyParamCaption}\item[{ostream \&}]{out,  }\item[{const \hyperlink{classVector}{Vector}$<$ F\+UN $>$ \&}]{v }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [related]}}
+
+
+
+Stream insertion operator for {\ttfamily \hyperlink{classVector}{Vector}}. 
+
+\begin{DoxyPrecond}{Precondition}
+Stream insertion operator is defined for {\ttfamily F\+UN}. 
+\end{DoxyPrecond}
+\begin{DoxyPostcond}{Postcondition}
+The contents of the vector are printed to the ouptut stream. 
+\end{DoxyPostcond}
+\begin{DoxyReturn}{Returns}
+the modified output stream. 
 \end{DoxyReturn}
 
 
