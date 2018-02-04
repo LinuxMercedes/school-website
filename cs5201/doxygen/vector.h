@@ -101,6 +101,9 @@ class Vector
      *
      * Note that this function is documented at the top of the file and uses the \relatesalso
      * command so that it will be included on the Vector class docs page.
+     *
+     * Also note that the implementation of this function doesn't require it to be a friend of Vector;
+     * in practice, I'd probably not bother with making it a friend at all.
      */
     friend ostream& operator<< <FUN>(ostream& out, const Vector<FUN>& v);
 #endif
