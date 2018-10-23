@@ -1,0 +1,98 @@
+Notes on chapter 12:
+
+12.3: I hope y'all are looking forward to learning about stuff like liftA2 --
+they make working with structure very nice!
+
+12.4: Type constructor application should feel a lot like function application,
+just "one level up". That is, what applying functions to values does to the
+type of the resulting expression is the same thing as what applying type
+constructors to types does to the kind of the resulting type.
+
+In other words, in the same way that
+
+f :: Bool -> Bool
+(f False) :: Bool
+
+we get
+
+data Id a = MkId a
+Id :: * ->  *
+Id Bool :: *
+
+
+
+A bit more on the whole 'undefined' buisness for newtypes. Suppose we have a
+data type:
+
+data Foo = MkFoo Integer deriving Show
+
+There are (at least) two ways to get a 'bottom' into Foo. First, we could do
+something like:
+
+> let x = undefined :: Foo
+> x
+*** Exception: Prelude.undefined
+
+But we can also put a bottom /inside/ Foo:
+
+> let y = MkFoo undefined
+> y
+MkFoo *** Exception: Prelude.undefined 
+
+Notice that this is a structurally different bottom from the first! We can see
+this because the 'show'ed representation is different: the first undefined
+blows up right away, but the second prints the constructor name first.
+
+
+Now let's put a newtype into the mix:
+
+newtype Bar = MkBar Foo deriving Show
+
+It would seem that, since Foo has at least two bottoms, this would have at
+least three: the two Foo bottoms plus a plain ol' 'undefined'. Let's see what
+they look like:
+
+> let bot1 = undefined :: Bar
+> bot1
+MkBar *** Exception: Prelude.undefined
+
+> let bot2 = MkBar (undefined :: Foo)
+> bot2
+MkBar *** Exception: Prelude.undefined
+
+> let bot3 = MkBar (MkFoo undefined)
+> bot3
+MkBar (MkFoo *** Exception: Prelude.undefined
+
+
+Curious! So the first two behave the exact same way -- even though for 'bot1'
+we didn't actually call MkBar, it shows up in the 'show'ed output! Why?
+
+Remember, newtypes are a social construct -- they don't exist except at the
+type level. This makes them cheap but it also means that we can only do
+type-ish things to them: use them in type signatures, write typeclass
+instances...and that's about it. The inhabitants of any newtype are /exactly/
+the same as the inhabitants of the underlying type, even down to bottoms.
+
+Hopefully that's at least a little bit informative, if not about
+lifted/unlifted types, then about bottoms and undefined.
+
+
+It would be good to talk about:
+- the String Processing exercises
+- listToMaybe and maybeToList
+    (can you write them both using the respective catamorphism?)
+- either': if you want to think about how to represent sum types in the lambda
+    calculus, this catamorphism is the way to think about it.
+- unfolds!!!!
+
+
+Chapter 13:
+
+I really don't have much to say about this chapter -- I hope the big example
+was helpful to y'all trying to see how IO works in big Haskell programs.
+
+It would be good to talk about:
+- Questions about modules
+- Questions about IO
+- Modifying Code, #3 and #4.
