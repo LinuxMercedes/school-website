@@ -1,0 +1,1149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<title>Interpreting + Abstractly with Signs</title>
+<link href="../../style.css" rel="stylesheet" type="text/css">
+<!-- TODO fix this in style.css? -->
+<style>
+.PreProc { color: #0066ff; }
+br { clear: both; }
+.Underlined { color: #0066ff; text-decoration: underline; }
+.Identifier { color: #0099ff; }
+</style>
+</head>
+<body>
+<div><a href="../..">Home</a> <a href="..">Articles</a><hr></div>
+
+<h2>Interpreting + Abstractly with Signs</h2>
+<p>
+Something about abstract interpretation.
+This article will talk about the set-of-signs abstract domain, abstractly interpreting addition with sets of signs, and proving the soundness of that interpretation using Coq.
+This is the first in a series of articles on abstract interpretation in Coq.
+We'll focus on the specific details of this interpretation and leave the general formulation of abstract interpretation for the future.
+</p>
+
+<p>
+The Coq script can be found <a href="https://github.com/LinuxMercedes/abs-int/blob/mistress/sign.v">here</a> if you'd like to follow along.
+I'm new to Coq, so this is intended as something of a beginner's tutorial.
+As such, a lot of the proofs are written out even when they could be solved with one of the more powerful automatic tactics.
+If you're curious about something or have advice about how I can better approach things, don't <a href="mailto:jarus@mst.edu">hesitate to let me know</a>!
+</p>
+
+<h3>The General Idea</h3>
+<p>
+The goal of abstract interpretation is to make static program analysis easier by interpreting a program on an "abstract domain" that captures whatever property you're trying to analyze.
+In this case, we're going to interpret programs on the integers in such a way that we can determine the sign (positive, negative, or zero) of the result without actually computing the result.
+More specifically, we're going to write an abstract version of addition, which could be combined with abstract versions of negation, multiplication, etc. and used to interpret more complex programs.
+</p>
+
+<p>
+We'll be interpreting addition over <i>sets of signs</i>.
+Why? Consider what the result of <code><b>Pos</b> &oplus; <b>Neg</b></code> should be.
+Depending on the values of the numbers added, the result could be positive, negative, or zero!
+We solve this problem by operating on sets of signs instead: <code>{<b>Pos</b>} &oplus; {<b>Neg</b>} = {<b>Neg</b>, <b> Zero</b>, <b> Pos</b>}</code>.
+<p>
+
+<p>
+We'll be relating <i>sets of integers</i> to sets of signs via an <i>abstraction function</i> <code>&alpha; : Set Int -&gt; Set Sign</code>.
+In short, we do this so we can define a sound mapping from the <i>concrete domain</i> (sets of integers) to the abstract domain (sets of signs).
+</p>
+
+<p>
+Finally, for our interpretation to be sound, we must prove that the abstract interpretation of addition is at worst more general than
+concretely interpreting addition and abstracting the results.
+In other words, for sets of integers <code>N</code> and <code>M</code>, <code>&alpha; (N + M) &subseteq; (&alpha; N) &oplus; (&alpha; M)</code>.
+</p>
+
+<p>
+Let's work a quick example. Say we want to determine the sign of <code>5 + (-5)</code>.
+<ul>
+	<li>Interpreting <code>+</code> concretely: <code>&alpha; {5 + (-5)} = &alpha; {0} = {<b>Zero</b>}</code></li>
+	<li>Interpreting <code>+</code> abstractly: <code>(&alpha; {5}) &oplus; (&alpha; {-5}) = {<b>Pos</b>} &oplus; {<b>Neg</b>} = {<b>Neg</b>, <b> Zero</b>, <b> Pos</b>}</code></li>
+</ul>
+Since <code>{<b>Zero</b>} &subseteq; {<b>Neg</b>, <b> Zero</b>, <b> Pos</b>}</code>, we say that this interpretation is sound.
+</p>
+
+<p>
+To sum up: we need to define
+<ul>
+	<li>Signs and sets of signs,</li>
+	<li>The abstract interpretation of addition, &oplus;,</li>
+	<li>Sets of integers, and</li>
+	<li>A means of abstracting sets of integers to sets of signs, &alpha;.</li>
+</ul>
+
+We need to prove
+<ul>
+	<li>That &alpha; is a sound abstraction method and</li>
+	<li>That &oplus; is a sound interpretation of addition.</li>
+</ul>
+
+So, let's get down to business!
+</p>
+
+<h3>Signs and Sets of Signs</h3>
+
+<h4>Signs</h4>
+<p>
+Our signs are just <code>Neg</code>, <code>Zero</code>, and <code>Pos</code>:
+<pre>
+<span class="PreProc">Inductive</span> <span class="Identifier">sign</span><span class="PreProc">:</span> Type <span class="PreProc">:=</span>
+  <span class="Statement">Neg</span> <span class="Statement">:</span> sign
+<span class="PreProc">|</span> <span class="Statement">Zero</span> <span class="Statement">:</span> sign
+<span class="PreProc">|</span> <span class="Statement">Pos</span> <span class="Statement">:</span> sign
+<span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+Since <code>sign</code> is very finite, we can use a finite set library to build the sets-of-signs type.
+I eventually want to explore extracting these definitions to Haskell, so I decided to use an &ldquo;efficient&rdquo; finite set library: <a href="https://coq.inria.fr/distrib/current/stdlib/Coq.MSets.MSetList.html#"><code>MSetList</code></a>.
+To use this library on <code>sign</code>, we need to define equality (<code>eq</code>) and an order (<code>compare</code>) for our type.
+Let's do that first and prove a couple theorems that will be handy later on.
+</p>
+
+<p>
+For equality, we specialize <a href="https://coq.inria.fr/library/Coq.Init.Logic.html#eq">Logic.eq</a> for <code>sign</code>:
+<pre>
+<span class="PreProc">Definition</span> <span class="Identifier">eq</span> <span class="PreProc">:=</span> <span class="Type">(@</span>eq sign<span class="Type">)</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+For order, we define <code>compare</code> by case and use it to define a strict order <code>lt</code>.
+<pre>
+<span class="PreProc">Definition</span> <span class="Identifier">compare</span> l r<span class="PreProc">:</span> comparison <span class="PreProc">:=</span>
+  <span class="Type">match</span> l<span class="Type">,</span> r <span class="Type">with</span>
+    Neg<span class="Type">,</span> Neg <span class="Type">=&gt;</span> Eq
+  <span class="Type">|</span> Neg<span class="Type">,</span> <span class="Type">_</span> <span class="Type">=&gt;</span> Lt
+  <span class="Type">|</span> Zero<span class="Type">,</span> Neg <span class="Type">=&gt;</span> Gt
+  <span class="Type">|</span> Zero<span class="Type">,</span> Zero <span class="Type">=&gt;</span> Eq
+  <span class="Type">|</span> Zero<span class="Type">,</span> Pos <span class="Type">=&gt;</span> Lt
+  <span class="Type">|</span> Pos<span class="Type">,</span> Pos <span class="Type">=&gt;</span> Eq
+  <span class="Type">|</span> Pos<span class="Type">,</span> <span class="Type">_</span> <span class="Type">=&gt;</span> Gt
+  <span class="Type">end</span><span class="PreProc">.</span>
+
+<span class="PreProc">Definition</span> <span class="Identifier">lt</span> l r<span class="PreProc">:</span> Prop <span class="PreProc">:=</span> <span class="Type">(</span>compare l r<span class="Type">)</span> <span class="Type">=</span> Lt<span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+Let's prove a couple lemmas about <code>compare</code>.
+First, we'll show that if <code>compare</code> thinks two elements are equal, they are:
+<pre>
+<span class="PreProc">Lemma</span> <span class="Identifier">sign_compare_eq</span><span class="PreProc">:</span> <span class="Type">forall</span> x y<span class="Type">,</span> compare x y <span class="Type">=</span> Eq <span class="Type">-&gt;</span> x <span class="Type">=</span> y<span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+We'll do this by cases and symbolically execute <code>compare</code>:
+<pre>
+<span class="Statement">case</span> x<span class="Statement">,</span> y<span class="Statement">;</span> <span class="Statement">simpl</span> <span class="Statement">compare</span><span class="Statement">;
+</pre>
+
+<pre>
+9 subgoals
+______________________________________(1/9)
+Eq = Eq -> Neg = Neg
+______________________________________(2/9)
+Lt = Eq -> Neg = Zero
+______________________________________(3/9)
+Lt = Eq -> Neg = Pos
+______________________________________(4/9)
+Gt = Eq -> Zero = Neg
+______________________________________(5/9)
+Eq = Eq -> Zero = Zero
+______________________________________(6/9)
+Lt = Eq -> Zero = Pos
+______________________________________(7/9)
+Gt = Eq -> Pos = Neg
+______________________________________(8/9)
+Gt = Eq -> Pos = Zero
+______________________________________(9/9)
+Eq = Eq -> Pos = Pos
+</pre>
+</p>
+<p>
+Each goal is of two forms: either the hypothesis is false (e.g., <code>Lt = Eq</code>) or the conclusion is trivial (e.g., <code>Neg = Neg</code>).
+We assume the hypothesis and then either prove the conclusion (<code>reflexivity</code>) or show that the hypothesis is self-contradictory (<code>discriminate</code>):
+
+<pre>
+<span class="Statement">intros</span> H<span class="Statement">;</span> <span class="Statement">try</span> <span class="Statement">reflexivity</span><span class="Statement">;</span> <span class="Statement">try</span> <span class="Statement">discriminate</span> H<span class="Statement">.</span>
+</pre>
+<pre>
+No more subgoals.
+</pre>
+<br>
+<pre>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+Next we'll show that <code>lt</code> and <code>compare</code> agree. This has two parts: one for when <code>compare x y</code> is <code>Lt</code>, and one for when it is <code>Gt</code>.
+The first part is straightforward since we have defined <code>lt</code> in terms of <code>compare</code>.
+All we have to do is replace <code>lt</code> with its definition (with <code>unfold</code>) and we get exactly what we're proving:
+<pre>
+<span class="PreProc">Lemma</span> <span class="Identifier">sign_compare_lt</span><span class="PreProc">:</span> <span class="Type">forall</span> x y<span class="Type">,</span> compare x y <span class="Type">=</span> Lt <span class="Type">-&gt;</span> lt x y<span class="PreProc">.</span>
+<span class="Statement">intros</span><span class="Statement">.</span>
+<span class="Statement">unfold</span> lt<span class="Statement">.</span>
+<span class="Statement">exact</span> H<span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+The second part is a mix of the first two. We expand <code>lt</code>, then do case analysis just as we did in <code>sign_compare_eq</code>:
+
+<pre>
+<span class="PreProc">Lemma</span> <span class="Identifier">sign_compare_gt</span><span class="PreProc">:</span> <span class="Type">forall</span> x y<span class="Type">,</span> compare x y <span class="Type">=</span> Gt <span class="Type">-&gt;</span> lt y x<span class="PreProc">.</span>
+<span class="Statement">unfold</span> lt<span class="Statement">.</span>
+<span class="Statement">case</span> x<span class="Statement">,</span> y<span class="Statement">;</span> <span class="Statement">simpl</span> <span class="Statement">compare</span><span class="Statement">;</span> <span class="Statement">intros</span> H<span class="Statement">;</span> <span class="Statement">try</span> <span class="Statement">reflexivity</span><span class="Statement">;</span> <span class="Statement">try</span> <span class="Statement">discriminate</span> H<span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<h4>Sets of Signs</h4>
+<p>
+<code>MSetList</code> is a finite set implementation which uses a sorted list to store set elements.
+To use it, we need to provide it with equality and order definitions for the element type and proofs that those definitions have certain properties.
+Since our type uses <code>Logic.eq</code>, which uses Coq's <a href="https://en.wikipedia.org/wiki/First-order_logic#Equality_and_its_axioms"><i>Leibniz equality</i></a>,
+we can use the <a href="https://coq.inria.fr/distrib/current/stdlib/Coq.MSets.MSetList.html#MakeWithLeibniz"><code>MakeWithLeibniz</code></a> module functor to construct
+an instance of <code>MSetList</code> for <code>sign</code>.
+</p>
+
+<p>
+(This section draws heavy inspiration from these examples:
+<a href="https://coq-club.inria.narkive.com/zptqoou2/how-to-use-msets#post2">1</a>,
+<a href="http://people.csail.mit.edu/cj/thesis/coqdoc/NameSet.html">2</a>,
+<a href="https://coq-club.inria.narkive.com/rep3h8gN/finite-sets-fset-etc#post2">3</a>,
+<a href="https://stackoverflow.com/questions/43083107/coq-mset-of-bounded-naturals">4</a>.)
+</p>
+
+<p>
+To use this module functor, we need a module which meets the <code>OrderedTypeWithLeibniz</code> module type.
+Below is the definition of <code>OrderedTypeWithLeibniz</code> (fetched via <code>Print OrderedTypeWithLeibniz.</code>).
+First it defines <code>t</code>, the type of elements of the set.
+Then it asks for definitions of equality and order and proofs of their properties.
+<pre>
+<span class="PreProc">Module Type</span> <span class="Identifier">OrderedTypeWithLeibniz.</span>
+   <span class="PreProc">Parameter</span> <span class="Identifier">t</span> <span class="PreProc">:</span> Type<span class="PreProc">.</span>
+   <span class="PreProc">Parameter</span> <span class="Identifier">eq</span> <span class="PreProc">:</span> t <span class="Type">-&gt;</span> t <span class="Type">-&gt;</span> Prop<span class="PreProc">.</span>
+   <span class="PreProc">Parameter</span> <span class="Identifier">eq_equiv</span> <span class="PreProc">:</span> Equivalence eq<span class="PreProc">.</span>
+   <span class="PreProc">Parameter</span> <span class="Identifier">lt</span> <span class="PreProc">:</span> t <span class="Type">-&gt;</span> t <span class="Type">-&gt;</span> Prop<span class="PreProc">.</span>
+   <span class="PreProc">Parameter</span> <span class="Identifier">lt_strorder</span> <span class="PreProc">:</span> StrictOrder lt<span class="PreProc">.</span>
+   <span class="PreProc">Parameter</span> <span class="Identifier">lt_compat</span> <span class="PreProc">:</span> Proper <span class="Type">(</span>eq <span class="Type">==&gt;</span> eq <span class="Type">==&gt;</span> iff<span class="Type">)</span> lt<span class="PreProc">.</span>
+   <span class="PreProc">Parameter</span> <span class="Identifier">compare</span> <span class="PreProc">:</span> t <span class="Type">-&gt;</span> t <span class="Type">-&gt;</span> comparison<span class="PreProc">.</span>
+   <span class="PreProc">Parameter</span> <span class="Identifier">compare_spec</span> <span class="PreProc">:</span>
+     <span class="Type">forall</span> x y <span class="Type">:</span> t<span class="Type">,</span> CompareSpec <span class="Type">(</span>eq x y<span class="Type">)</span> <span class="Type">(</span>lt x y<span class="Type">)</span> <span class="Type">(</span>lt y x<span class="Type">)</span> <span class="Type">(</span>compare x y<span class="Type">)</span><span class="PreProc">.</span>
+   <span class="PreProc">Parameter</span> <span class="Identifier">eq_dec</span> <span class="PreProc">:</span> <span class="Type">forall</span> x y <span class="Type">:</span> t<span class="Type">,</span> <span class="Type">{</span>eq x y<span class="Type">}</span> <span class="Type">+</span> <span class="Type">{~</span> eq x y<span class="Type">}</span><span class="PreProc">.</span>
+   <span class="PreProc">Parameter</span> <span class="Identifier">eq_leibniz</span> <span class="PreProc">:</span> <span class="Type">forall</span> x y <span class="Type">:</span> t<span class="Type">,</span> eq x y <span class="Type">-&gt;</span> x <span class="Type">=</span> y<span class="PreProc">.</span>
+ <span class="Underlined">End</span> <span class="Identifier">OrderedTypeWithLeibniz</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+We'll make a module <code>SignOTWL</code> that has this type.
+We say what type the set elements are and what the equality relationship is.
+Then, we have to prove that <code>eq</code> is an <a href="https://en.wikipedia.org/wiki/Equivalence_relation">equivalence relation</a>:
+
+<pre>
+<span class="PreProc">Module</span> <span class="Identifier">SignOTWL</span> <span class="PreProc">&lt;:</span> OrderedTypeWithLeibniz<span class="PreProc">.</span>
+<span class="PreProc">Definition</span> <span class="Identifier">t</span> <span class="PreProc">:=</span> sign<span class="PreProc">.</span>
+<span class="PreProc">Definition</span> <span class="Identifier">eq</span> <span class="PreProc">:=</span> eq<span class="PreProc">.</span>
+<span class="PreProc">Instance</span> <span class="Identifier">eq_equiv</span> <span class="PreProc">:</span> Equivalence eq<span class="PreProc">.</span>
+<span class="Underlined">Proof</span><span class="PreProc">.</span>
+<span class="Statement">split</span><span class="Statement">;</span>
+<span class="Statement">unfold</span> Reflexive<span class="Statement">;</span> <span class="Statement">unfold</span> Symmetric<span class="Statement">;</span> <span class="Statement">unfold</span> Transitive<span class="Statement">.</span>
+</pre>
+<pre>
+3 subgoals
+______________________________________(1/3)
+forall x : sign, eq x x
+______________________________________(2/3)
+forall x y : sign, eq x y -> eq y x
+______________________________________(3/3)
+forall x y z : sign, eq x y -> eq y z -> eq x z
+</pre>
+</p>
+
+<p>
+The <code>reflexivity</code> tactic can prove <code>eq x x</code>, so all we need to do is use the hypotheses to rewrite the conclusion to that form:
+
+<pre>
+<span class="Statement">reflexivity</span><span class="Statement">.</span>
+<span class="Statement">intros</span><span class="Statement">.</span>
+<span class="Statement">rewrite</span> H<span class="Statement">.</span>
+<span class="Statement">reflexivity</span><span class="Statement">.</span>
+<span class="Statement">intros</span><span class="Statement">.</span>
+<span class="Statement">rewrite</span> H<span class="Statement">.</span>
+<span class="Statement">rewrite</span> H0<span class="Statement">.</span>
+<span class="Statement">reflexivity</span><span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+There's more to prove about equality, but we're going to define the order before that.
+First, we have to prove that it's <a href="https://en.wikipedia.org/wiki/Partially_ordered_set#Strict_and_non-strict_partial_orders">strict</a>:
+
+<pre>
+<span class="PreProc">Definition</span> <span class="Identifier">lt</span> <span class="PreProc">:=</span> lt<span class="PreProc">.</span>
+<span class="PreProc">Instance</span> <span class="Identifier">lt_strorder</span><span class="PreProc">:</span> StrictOrder lt<span class="PreProc">.</span>
+<span class="Underlined">Proof</span><span class="PreProc">.</span>
+<span class="Statement">split</span><span class="Statement">;</span>
+<span class="Statement">unfold</span> Irreflexive<span class="Statement">;</span> <span class="Statement">unfold</span> Reflexive<span class="Statement">;</span> <span class="Statement">unfold</span> complement<span class="Statement">;</span> <span class="Statement">unfold</span> Transitive<span class="Statement">;</span>
+<span class="Statement">unfold</span> lt<span class="Statement">;</span> <span class="Statement">unfold</span> Top<span class="Statement">.</span>lt<span class="Statement">.</span>
+</pre>
+<pre>
+2 subgoals
+______________________________________(1/2)
+forall x : sign, compare x x = Lt -> False
+______________________________________(2/2)
+forall x y z : sign,
+   compare x y = Lt
+-> compare y z = Lt
+-> compare x z = Lt
+</pre>
+</p>
+
+<p>
+The first goal we prove by cases and symbolically computing <code>compare</code>:
+
+<pre>
+<span class="Statement">intros</span> x<span class="Statement">.</span>
+<span class="Statement">case</span> x<span class="Statement">;</span> <span class="Statement">simpl</span> <span class="Statement">compare</span><span class="Statement">;</span>
+</pre>
+<pre>
+4 subgoals
+x : sign
+______________________________________(1/4)
+Eq = Lt -> False
+______________________________________(2/4)
+Eq = Lt -> False
+______________________________________(3/4)
+Eq = Lt -> False
+(...)
+</pre>
+</p>
+
+<p>
+Each hypothesis is false, so we can <code>discriminate</code> them:
+<pre>
+<span class="Statement">intros</span> H<span class="Statement">;</span> <span class="Statement">discriminate</span> H<span class="Statement">.</span>
+</pre>
+<pre>
+1 subgoal
+______________________________________(1/1)
+forall x y z : sign,
+   compare x y = Lt
+-> compare y z = Lt
+-> compare x z = Lt
+</pre>
+</p>
+
+<p>
+The last goal can also be done by cases:
+
+<pre>
+<span class="Statement">case</span> x<span class="Statement">;</span> <span class="Statement">simpl</span> <span class="Statement">compare</span><span class="Statement">;</span>
+</pre>
+<pre>
+27 subgoals
+______________________________________(1/27)
+Eq = Lt -> Eq = Lt -> Eq = Lt
+(...)
+______________________________________(4/27)
+Lt = Lt -> Gt = Lt -> Eq = Lt
+(...)
+______________________________________(6/27)
+Lt = Lt -> Lt = Lt -> Lt = Lt
+(...)
+</pre>
+</p>
+
+<p>
+The three (of 27!) subgoals above show the three general cases: either one of the hypotheses is false or the conclusion is true.
+Situations like this are where the <code>try</code> tactic really comes in handy.
+We'll use it to attempt to disprove either hypothesis or, failing that, prove the conclusion:
+
+<pre>
+<span class="Statement">intros</span> H1 H2<span class="Statement">;</span> <span class="Statement">try</span> <span class="Statement">discriminate</span> H1<span class="Statement">;</span> <span class="Statement">try</span> <span class="Statement">discriminate</span> H2<span class="Statement">;</span> <span class="Statement">try</span> <span class="Statement">reflexivity</span><span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+The next reqirement asks us to prove that, if <code>x = y</code> and <code>z = w</code>, then <code>lt x z</code> iff <code>lt y w</code>.
+
+<pre>
+<span class="PreProc">Instance</span> <span class="Identifier">lt_compat</span> <span class="PreProc">:</span> Proper <span class="Type">(</span>eq <span class="Type">==&gt;</span> eq <span class="Type">==&gt;</span> iff<span class="Type">)</span> lt<span class="PreProc">.</span>
+<span class="Underlined">Proof</span><span class="PreProc">.</span>
+<span class="Statement">split</span><span class="Statement">;</span>
+</pre>
+<pre>
+2 subgoals
+x, y : sign
+H : eq x y
+x0, y0 : sign
+H0 : eq x0 y0
+______________________________________(1/2)
+lt x x0 -> lt y y0
+______________________________________(2/2)
+lt y y0 -> lt x x0
+</pre>
+</p>
+
+<p>
+We can use equality (<code>H</code> and <code>H0</code>) to rewrite the goals until they're exactly the same:
+
+<pre>
+<span class="Statement">rewrite</span> H<span class="Statement">;</span> <span class="Statement">rewrite</span> H0<span class="Statement">;</span>
+</pre>
+<pre>
+2 subgoals
+(...)
+______________________________________(1/2)
+lt y y0 -> lt y y0
+______________________________________(2/2)
+lt y y0 -> lt y y0
+</pre>
+</p>
+
+<p>
+And that is exactly what we're trying to prove.
+
+<pre>
+<span class="Statement">intros</span> Hlt<span class="Statement">;</span> <span class="Statement">exact</span> Hlt<span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+Next we provide a comparison function (<code>compare</code>) and prove that it agrees with <code>eq</code> and <code>lt</code>.
+We already proved the lemmas needed to show this; this proof just takes apart <code>CompSpec</code> and applies them.
+
+<pre>
+<span class="PreProc">Definition</span> <span class="Identifier">compare</span> <span class="PreProc">:=</span> compare<span class="PreProc">.</span>
+<span class="PreProc">Lemma</span> <span class="Identifier">compare_spec</span><span class="PreProc">:</span> <span class="Type">forall</span> x y<span class="Type">,</span> CompSpec eq lt x y <span class="Type">(</span>compare x y<span class="Type">)</span><span class="PreProc">.</span>
+<span class="Statement">intros</span><span class="Statement">.</span>
+<span class="Statement">unfold</span> CompSpec<span class="Statement">.</span>
+<span class="Statement">case_eq</span> <span class="Statement">(</span><span class="Statement">compare</span> x y<span class="Statement">);</span>
+<span class="Statement">constructor</span><span class="Statement">.</span>
+<span class="Statement">apply</span> sign_compare_eq<span class="Statement">.</span>
+<span class="Statement">exact</span> H<span class="Statement">.</span>
+<span class="Statement">apply</span> sign_compare_lt<span class="Statement">.</span>
+<span class="Statement">exact</span> H<span class="Statement">.</span>
+<span class="Statement">apply</span> sign_compare_gt<span class="Statement">.</span>
+<span class="Statement">exact</span> H<span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+Finally, we have a couple more things to prove about equality.
+It has to be decidable&mdash;either <code>eq x y</code> or <code>~ eq x y</code>.
+Coq states this by using a <i>dependent pair</i> which (more or less) is either the value <code>left</code> or <code>right</code>, plus a proof that the value was chosen correctly.
+As usual, we'll prove it by cases:
+
+<pre>
+<span class="PreProc">Lemma</span> <span class="Identifier">eq_dec</span><span class="PreProc">:</span> <span class="Type">forall</span> x y<span class="Type">:</span>sign<span class="Type">,</span> <span class="Type">{</span>eq x y<span class="Type">}</span> <span class="Type">+</span> <span class="Type">{~</span> eq x y<span class="Type">}</span><span class="PreProc">.</span>
+<span class="Statement">case</span> x<span class="Statement">,</span> y<span class="Statement">;</span>
+</pre>
+<pre>
+9 subgoals
+______________________________________(1/9)
+{eq Neg Neg} + {~ eq Neg Neg}
+______________________________________(2/9)
+{eq Neg Zero} + {~ eq Neg Zero}
+(...)
+</pre>
+</p>
+
+<p>
+To prove each subgoal, we need to state which side of the pair we want to prove using <code>left</code> or <code>right</code>, then prove it.
+When using <code>try</code> on these subgoals, it is important to use e.g., <code>try (left; reflexivity)</code> rather than <code>try left; try reflexivity</code>.
+<code>left</code> would succeed for every subgoal, leaving us with a bunch of impossible things to prove!
+
+<pre>
+<span class="Statement">try</span> <span class="Statement">(</span><span class="Statement">left</span><span class="Statement">;</span> <span class="Statement">reflexivity</span><span class="Statement">);</span> <span class="Statement">try</span> <span class="Statement">(</span><span class="Statement">right</span><span class="Statement">;</span> <span class="Statement">discriminate</span><span class="Statement">).</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+The one thing that remains is to show that our equality is a Leibniz equality.
+Because that's what <code>Logic.eq</code> is, the proof is rather straightforward:
+
+<pre>
+<span class="PreProc">Lemma</span> <span class="Identifier">eq_leibniz</span><span class="PreProc">:</span> <span class="Type">forall</span> x y<span class="Type">:</span> sign<span class="Type">,</span> <span class="Type">(</span>eq x y<span class="Type">)</span> <span class="Type">-&gt;</span> x <span class="Type">=</span> y<span class="PreProc">.</span>
+<span class="Statement">intros</span><span class="Statement">.</span>
+<span class="Statement">exact</span> H<span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+<span class="Underlined">End</span> <span class="Identifier">SignOTWL</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+Now that we've satisfied <code>OrderedTypeWithLeibniz</code>, we can make the SignSet module!
+We'll also make modules with various facts and properties that will come up later in proofs.
+
+<pre>
+<span class="PreProc">Module</span> <span class="Identifier">SignSet</span> <span class="PreProc">:=</span> MakeWithLeibniz SignOTWL<span class="PreProc">.</span>
+<span class="PreProc">Module</span> <span class="Identifier">SignSetFacts</span> <span class="PreProc">:=</span> MSetFacts.WFacts SignSet<span class="PreProc">.</span>
+<span class="PreProc">Module</span> <span class="Identifier">SignSetProps</span> <span class="PreProc">:=</span> MSetProperties.WProperties SignSet<span class="PreProc">.</span>
+
+<span class="PreProc">Definition</span> <span class="Identifier">signset</span> <span class="PreProc">:=</span> SignSet.t<span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+For convenience, let's define the set of all signs, <code>AllSigns</code>.
+While strictly not necessary, I wrote a function for turning a list into a set to make this a bit easier.
+(There's probably something that does this already in <code>MSetList</code>, but I couldn't find it.)
+
+<pre>
+<span class="PreProc">Require Import</span> List<span class="PreProc">.</span>
+
+<span class="PreProc">Fixpoint</span> <span class="Identifier">fromList</span> l <span class="PreProc">:</span> SignSet.t <span class="PreProc">:=</span>
+  <span class="Type">match</span> l <span class="Type">with</span>
+    nil <span class="Type">=&gt;</span> SignSet.empty
+  <span class="Type">|</span> <span class="Type">(</span>h <span class="Type">::</span> t<span class="Type">)</span> <span class="Type">=&gt;</span> SignSet.add h <span class="Type">(</span>fromList t<span class="Type">)</span>
+  <span class="Type">end</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+We can then make <code>AllSigns</code> and prove that it, in fact, contains all elements of <code>sign</code>:
+
+<pre>
+<span class="PreProc">Definition</span> <span class="Identifier">AllSigns</span> <span class="PreProc">:=</span> fromList <span class="Type">(</span>Neg <span class="Type">::</span> Zero <span class="Type">::</span> Pos <span class="Type">::</span> nil<span class="Type">)</span><span class="PreProc">.</span>
+
+<span class="PreProc">Lemma</span> <span class="Identifier">in_allsigns</span><span class="PreProc">:</span> <span class="Type">forall</span> x<span class="Type">,</span> SignSet.In x AllSigns<span class="PreProc">.</span>
+<span class="Statement">intros</span><span class="Statement">.</span>
+<span class="Statement">unfold</span> AllSigns<span class="Statement">;</span> <span class="Statement">simpl</span><span class="Statement">.</span>
+<span class="Statement">case</span> x<span class="Statement">;</span> <span class="Statement">intuition</span><span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+One last fact that will come in handy as soon as we start proving things about &alpha;: if we have a singleton set (i.e., something that looks like <code>{s}</code>),
+there is something in that set:
+
+<pre>
+<span class="PreProc">Lemma</span> <span class="Identifier">exists_in_singleton</span><span class="PreProc">:</span> <span class="Type">forall</span> s<span class="Type">,</span>
+<span class="Type">exists</span> t<span class="Type">,</span> SignSet.In t <span class="Type">(</span>SignSet.singleton s<span class="Type">)</span><span class="PreProc">.</span>
+<span class="Statement">intros</span><span class="Statement">.</span>
+<span class="Statement">exists</span> s<span class="Statement">.</span>
+</pre>
+<pre>
+1 subgoal
+s : SignSet.elt
+______________________________________(1/1)
+SignSet.In s (SignSet.singleton s)
+</pre>
+</p>
+
+<p>
+Here we can make use of one of the facts or propositions we have about <code>SignSet</code>.
+A search for <code>SignSet.singleton</code> turns up 
+<pre><code>SignSetProps.Dec.F.singleton_2:
+  forall x y : SignSet.elt, eq x y -> SignSet.In y (SignSet.singleton x)</code></pre>
+</p>
+
+<p>
+If we <code>apply</code> this to the goal, it will transform the goal into the left hand side of the implication, leaving us to prove <code>eq s s</code>:
+
+<pre>
+<span class="Statement">apply</span> SignSetProps<span class="Statement">.</span>Dec<span class="Statement">.</span>F<span class="Statement">.</span>singleton_2<span class="Statement">.</span>
+<span class="Statement">reflexivity</span><span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<h3>Sets of Integers</h3>
+
+<p>
+Coq provides a library for working with integers, <code>ZArith</code>, which defines the <a href="https://coq.inria.fr/library/Coq.Numbers.BinNums.html#Z"><code>Z</code></a> type.
+
+<pre>
+<span class="PreProc">Require Import</span> ZArith<span class="PreProc">.</span>
+<span class="PreProc">Open</span> <span class="PreProc">Scope</span> Z_scope<span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+Since we need to work with potentially infinite sets of integers, we'll have to use a different set formalism.
+I chose to use <a href="https://coq.inria.fr/library/Coq.Sets.Ensembles.html">Ensembles</a>, which model a set <code>P</code> as a proposition <code>P : elt -> Prop</code>
+which determines whether a given element is included in the set.
+Set unions, subset relations, &amp;c. can all be written using logical connectives.
+For example, <code>P &subseteq; Q</code> corresponds to <code>forall x, P x -> Q x</code>.
+</p>
+
+<p>
+While the ensemble library defines aliases for these operations, I've just directly written the logical versions as it was easier to reason about.
+(The ensemble library could really do with a few nontrivial examples of writing functions with ensembles;
+perhaps I'm just thinking about sets like a computer scientist and not like a mathematician.)
+
+<pre>
+<span class="PreProc">Require Import</span> Ensembles<span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+Unfortunately ensembles don't work all that well with <code>MSets</code>, so some of the definitions end up coming out a bit clunky.
+Ideally I think I should have written the entire thing to use ensembles and then proved some sort of extension from the ensemble version to a finite-set version.
+Something to think about for the future, anyway.
+</p>
+
+<h3>Abstracting Sets of Integers to Sets of Signs</h3>
+
+<p>
+Abstracting an integer to the smallest set of signs describing it is pretty straightforward:
+
+<pre>
+<span class="PreProc">Definition</span> <span class="Identifier">sign_of</span> <span class="PreProc">(</span>n<span class="PreProc">:</span>Z<span class="PreProc">)</span> <span class="PreProc">:</span> signset <span class="PreProc">:=</span>
+  <span class="Type">match</span> Z.compare n 0 <span class="Type">with</span>
+    Eq <span class="Type">=&gt;</span> SignSet.singleton Zero
+  <span class="Type">|</span> Lt <span class="Type">=&gt;</span> SignSet.singleton Neg
+  <span class="Type">|</span> Gt <span class="Type">=&gt;</span> SignSet.singleton Pos
+  <span class="Type">end</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+A sound mapping from sets of integers to sets of signs is a bidirectional relationship <code>&alpha; : Set Z -> signset</code>, <code>&gamma; : signset -> Set Z</code>.
+We use this bidirectional relationship to prove that &alpha; doesn't "go wrong"&mdash;that it produces results which contain the correct sign.
+<pre>
+<span class="PreProc">Definition</span> <span class="Identifier">alpha</span> P s <span class="PreProc">:</span> Prop <span class="PreProc">:=</span> <span class="Type">exists</span> n<span class="Type">,</span> P n <span class="Type">/\</span> SignSet.In s <span class="Type">(</span>sign_of n<span class="Type">)</span><span class="PreProc">.</span>
+<span class="PreProc">Definition</span> <span class="Identifier">gamma</span> P n <span class="PreProc">:</span> Prop <span class="PreProc">:=</span> <span class="Type">exists</span> s<span class="Type">,</span> P s <span class="Type">/\</span> SignSet.In s <span class="Type">(</span>sign_of n<span class="Type">)</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+In other words, a sign is in <code>&alpha; P</code> if it matches the sign of an integer in <code>P</code>.
+Likewise, an integer is in <code>&gamma; P</code> if its sign is in <code>P</code>.
+</p>
+
+<p>
+For &alpha; and &gamma; to be sound, they must be monotone&mdash;they must preserve the &ldquo;subset&rdquo; relationship.
+If <code>P &subseteq; Q</code>, <code>(&alpha; P) &subseteq; (&alpha; Q)</code> and <code>(&gamma; P) &subseteq; (&gamma; Q)</code>.
+These proofs are rather dull.
+
+<pre>
+<span class="PreProc">Lemma</span> <span class="Identifier">alpha_monotone</span><span class="PreProc">:</span> <span class="Type">forall</span> <span class="Type">(</span>P Q<span class="Type">:</span> Ensemble Z<span class="Type">),</span>
+  <span class="Type">(</span><span class="Type">forall</span> n<span class="Type">,</span> P n <span class="Type">-&gt;</span> Q n<span class="Type">)</span> <span class="Type">-&gt;</span> <span class="Type">(</span><span class="Type">forall</span> s<span class="Type">,</span> <span class="Type">(</span>alpha P<span class="Type">)</span> s <span class="Type">-&gt;</span> <span class="Type">(</span>alpha Q<span class="Type">)</span> s<span class="Type">)</span><span class="PreProc">.</span>
+<span class="Statement">intros</span> P Q HPnQn<span class="Statement">.</span>
+<span class="Statement">unfold</span> alpha<span class="Statement">.</span>
+<span class="Statement">intros</span> s <span class="Statement">[</span>n <span class="Statement">[</span>HPn Hsalpha<span class="Statement">]].</span>
+</pre>
+<pre>
+1 subgoal
+P, Q : Ensemble Z
+HPnQn : forall n : Z, P n -> Q n
+s : SignSet.elt
+n : Z
+HPn : P n
+Hsalpha : SignSet.In s (sign_of n)
+______________________________________(1/1)
+exists n0 : Z, Q n0 /\ SignSet.In s (sign_of n0)
+</pre>
+</p>
+
+<p>
+We need to find an integer in the set <code>Q</code> whose sign is <code>s</code>.
+The integer <code>n</code> fits both of these requirements, since <code>P &subseteq; Q</code> and <code>n</code> is in <code>P</code>:
+
+<pre>
+<span class="Statement">exists</span> n<span class="Statement">.</span>
+<span class="Statement">split</span><span class="Statement">.</span>
+<span class="Statement">apply</span> HPnQn <span class="Statement">in</span> HPn<span class="Statement">.</span>
+<span class="Statement">exact</span> HPn<span class="Statement">.</span>
+<span class="Statement">exact</span> Hsalpha<span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+As I said before, these proofs just put me to sleep, and Coq agrees: you can solve them with <code>auto</code>:
+<pre>
+<span class="PreProc">Lemma</span> <span class="Identifier">gamma_monotone</span><span class="PreProc">:</span> <span class="Type">forall</span> <span class="Type">(</span>P Q <span class="Type">:</span> Ensemble sign<span class="Type">),</span>
+  <span class="Type">(</span><span class="Type">forall</span> s<span class="Type">,</span> P s <span class="Type">-&gt;</span> Q s<span class="Type">)</span> <span class="Type">-&gt;</span> <span class="Type">(</span><span class="Type">forall</span> n<span class="Type">,</span> <span class="Type">(</span>gamma P<span class="Type">)</span> n <span class="Type">-&gt;</span> <span class="Type">(</span>gamma Q<span class="Type">)</span> n<span class="Type">)</span><span class="PreProc">.</span>
+<span class="Statement">intros</span> P Q HPsQs<span class="Statement">.</span>
+<span class="Statement">unfold</span> gamma<span class="Statement">.</span>
+<span class="Statement">intros</span> n <span class="Statement">[</span>s <span class="Statement">[</span>HPs Hsalpha<span class="Statement">]].</span>
+<span class="Statement">exists</span> s<span class="Statement">.</span>
+<span class="Statement">auto</span><span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+Finally, &alpha; and &gamma; must live up to the following relationships:
+<ol>
+	<li>
+		<code>P &subseteq; (&gamma; (&alpha; P))</code> &mdash;
+	  &ldquo;throwing away&rdquo; information about P by &ldquo;traveling through <code>signset</code>&rdquo; produces at most a &ldquo;more general&rdquo; version of P.
+	</li>
+	<li>
+		<code>(&alpha; (&gamma; P)) &subseteq; P</code> &mdash;
+		any information &ldquo;gained&rdquo; by traveling through <code>Z</code> produces at most a &ldquo;more specific&rdquo; version of P.
+		(In this case, we actually get = instead of &subseteq;!)
+	</li>
+</ol>
+</p>
+
+<p>
+We'll first show that &alpha; maps every nonempty integer set <code>P</code> to a nonempty sign set.
+We do this by cases on an integer in <code>P</code> and symbolically computing <code>sign_of</code> to show that it produces nonempty sets of signs:
+
+<pre>
+<span class="PreProc">Lemma</span> <span class="Identifier">sign_in_alpha</span><span class="PreProc">:</span> <span class="Type">forall</span> n P<span class="Type">,</span> P n <span class="Type">-&gt;</span> <span class="Type">exists</span> s<span class="Type">,</span> SignSet.In s <span class="Type">(</span>sign_of n<span class="Type">)</span><span class="PreProc">.</span>
+<span class="Statement">intros</span><span class="Statement">.</span>
+<span class="Statement">unfold</span> sign_of<span class="Statement">.</span>
+<span class="Statement">case_eq</span> n<span class="Statement">;</span> <span class="Statement">simpl</span><span class="Statement">;</span> <span class="Statement">intros</span><span class="Statement">;</span> <span class="Statement">apply</span> exists_in_singleton<span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+To prove (1), we start by computing the sign <code>s</code> of an integer <code>n</code> in the set <code>P</code>:
+
+<pre>
+<span class="PreProc">Lemma</span> <span class="Identifier">gamma_alpha</span><span class="PreProc">:</span> <span class="Type">forall</span> <span class="Type">(</span>P<span class="Type">:</span> Ensemble Z<span class="Type">)</span> n<span class="Type">,</span> P n <span class="Type">-&gt;</span> <span class="Type">(</span>gamma <span class="Type">(</span>alpha P<span class="Type">))</span> n<span class="PreProc">.</span>
+<span class="Statement">intros</span> P n HPn<span class="Statement">.</span>
+<span class="Statement">unfold</span> alpha<span class="Statement">;</span> <span class="Statement">unfold</span> gamma<span class="Statement">.</span>
+<span class="Statement">assert</span> <span class="Statement">(</span>HPn_has_sign <span class="Statement">:=</span> HPn<span class="Statement">).</span>
+<span class="Statement">apply</span> sign_in_alpha <span class="Statement">in</span> HPn_has_sign<span class="Statement">.</span>
+<span class="Statement">destruct</span> HPn_has_sign <span class="Statement">as</span> <span class="Statement">[</span>s Hsalpha<span class="Statement">].</span>
+</pre>
+<pre>
+1 subgoal
+P : Ensemble Z
+n : Z
+HPn : P n
+s : SignSet.elt
+Hsalpha : SignSet.In s (sign_of n)
+______________________________________(1/1)
+exists s0 : SignSet.elt,
+  (exists n0 : Z, P n0 /\ SignSet.In s0 (sign_of n0)) /\
+  SignSet.In s0 (sign_of n)
+</pre>
+</p>
+
+<p>
+What remains is to show that <code>s</code> is in <code>&alpha; P</code> and therefore that <code>n</code> is in <code>&gamma; (&alpha; P)</code>.
+This amounts to stating that <code>s</code> and <code>n</code> meet the requirements for the <code>exists</code> clauses in &alpha; and &gamma;:
+
+<pre>
+<span class="Statement">exists</span> s<span class="Statement">.</span>
+<span class="Statement">split</span><span class="Statement">.</span>
+<span class="Statement">exists</span> n<span class="Statement">.</span>
+<span class="Statement">split</span><span class="Statement">.</span>
+<span class="Statement">exact</span> HPn<span class="Statement">.</span>
+<span class="Statement">exact</span> Hsalpha<span class="Statement">.</span>
+<span class="Statement">exact</span> Hsalpha<span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+To prove (2), we first introduce and simplify the numerous assumptions we get:
+
+<pre>
+<span class="PreProc">Lemma</span> <span class="Identifier">alpha_gamma</span><span class="PreProc">:</span> <span class="Type">forall</span> P s<span class="Type">,</span> <span class="Type">(</span>alpha <span class="Type">(</span>gamma P<span class="Type">))</span> s <span class="Type">-&gt;</span> P s<span class="PreProc">.</span>
+<span class="Statement">intros</span> P s<span class="Statement">.</span>
+<span class="Statement">unfold</span> alpha<span class="Statement">;</span> <span class="Statement">unfold</span> gamma<span class="Statement">.</span>
+<span class="Statement">intros</span> <span class="Statement">[</span>n <span class="Statement">[[</span>t <span class="Statement">[</span>Htp Htalpha<span class="Statement">]]</span> Hsalpha<span class="Statement">]].</span>
+</pre>
+<pre>
+1 subgoal
+P : SignSet.elt -> Prop
+s : SignSet.elt
+n : Z
+t : SignSet.elt
+Htp : P t
+Htalpha : SignSet.In t (sign_of n)
+Hsalpha : SignSet.In s (sign_of n)
+______________________________________(1/1)
+P s
+</pre>
+</p>
+
+<p>
+The rest of the proof consists of tediously showing that <code>t = s</code> follows from <code>Htalpha</code> and <code>Hsalpha</code>
+by doing case analysis on <code>n</code> and symbolically computing <code>sign_of</code>:
+<pre>
+<span class="Statement">case_eq</span> n<span class="Statement">;</span>
+<span class="Statement">intros</span><span class="Statement">;</span> <span class="Statement">rename</span> H <span class="Statement">into</span> Hn<span class="Statement">;</span>
+<span class="Statement">rewrite</span> Hn <span class="Statement">in</span> Hsalpha<span class="Statement">;</span> <span class="Statement">unfold</span> sign_of <span class="Statement">in</span> Hsalpha<span class="Statement">;</span> <span class="Statement">simpl</span> <span class="Statement">in</span> Hsalpha<span class="Statement">;</span>
+<span class="Statement">rewrite</span> Hn <span class="Statement">in</span> Htalpha<span class="Statement">;</span> <span class="Statement">unfold</span> sign_of <span class="Statement">in</span> Htalpha<span class="Statement">;</span> <span class="Statement">simpl</span> <span class="Statement">in</span> Htalpha<span class="Statement">;</span>
+<span class="Statement">apply</span> SignSetProps<span class="Statement">.</span>Dec<span class="Statement">.</span>F<span class="Statement">.</span>singleton_1 <span class="Statement">in</span> Hsalpha<span class="Statement">;</span>
+<span class="Statement">apply</span> SignSetProps<span class="Statement">.</span>Dec<span class="Statement">.</span>F<span class="Statement">.</span>singleton_1 <span class="Statement">in</span> Htalpha<span class="Statement">;</span>
+<span class="Statement">rewrite</span> &lt;- Htalpha <span class="Statement">in</span> Htp<span class="Statement">;</span>
+<span class="Statement">rewrite</span> &lt;- Hsalpha<span class="Statement">;</span>
+<span class="Statement">exact</span> Htp<span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+<p>
+(Note that <pre><code>SignSetProps.Dec.F.singleton_1:
+  forall x y : SignSet.elt, SignSet.In y (SignSet.singleton x) -> eq x y</code></pre><br>
+is the converse of <code>SignSetProps.Dec.F.singleton_2</code>.)
+</p>
+
+<h3>Adding Sets of Integers</h3>
+
+<p>
+Recall that &alpha; relates sets of integers to sets of signs; therefore, we need to &ldquo;lift&rdquo; addition to sets of integers.
+The sum of two sets of integers <code>P</code> and <code>Q</code> is a set where each element is the sum of an element of <code>P</code> and an element of <code>Q</code>:
+
+<pre>
+<span class="PreProc">Definition</span> <span class="Identifier">set_plus</span> P Q x <span class="PreProc">:</span> Prop <span class="PreProc">:=</span> <span class="Type">exists</span> n m<span class="Type">,</span> P n <span class="Type">/\</span> Q m <span class="Type">/\</span> n <span class="Type">+</span> m <span class="Type">=</span> x<span class="PreProc">.</span>
+</pre>
+</p>
+
+<h3>Adding Sets of Signs</h3>
+
+<p>
+We begin by defining the result of adding two signs together.
+For the most part the sign of the result is known exactly; however, the example in &ldquo;The General Idea&rdquo; illustrates a situation where the result could have any sign.
+</p>
+
+<p>
+It is easiest to define <code>sign_plus</code> by exhaustively writing out the cases.
+(We could take advantage of commutativity to reduce the cases by half, but Coq requires that the recursion terminate and can't see that the operation is commutative.
+That can be solved by using some &ldquo;gas&rdquo;, but that makes <a href="https://github.com/LinuxMercedes/abs-int/blob/mistress/sign.v#L256-L272">the function</a>
+more complex and less obviously correct.)
+
+<pre>
+<span class="PreProc">Definition</span> <span class="Identifier">sign_plus</span> <span class="PreProc">(</span>n<span class="PreProc">:</span> sign<span class="PreProc">)</span> <span class="PreProc">(</span>m<span class="PreProc">:</span> sign<span class="PreProc">)</span> <span class="PreProc">:</span> SignSet.t <span class="PreProc">:=</span>
+  <span class="Type">match</span> n<span class="Type">,</span> m <span class="Type">with</span>
+    Neg<span class="Type">,</span>  Neg  <span class="Type">=&gt;</span> SignSet.singleton Neg
+  <span class="Type">|</span> Neg<span class="Type">,</span>  Zero <span class="Type">=&gt;</span> SignSet.singleton Neg
+  <span class="Type">|</span> Neg<span class="Type">,</span>  Pos  <span class="Type">=&gt;</span> AllSigns
+  <span class="Type">|</span> Zero<span class="Type">,</span> Neg  <span class="Type">=&gt;</span> SignSet.singleton Neg
+  <span class="Type">|</span> Zero<span class="Type">,</span> Zero <span class="Type">=&gt;</span> SignSet.singleton Zero
+  <span class="Type">|</span> Zero<span class="Type">,</span> Pos  <span class="Type">=&gt;</span> SignSet.singleton Pos
+  <span class="Type">|</span> Pos<span class="Type">,</span>  Neg  <span class="Type">=&gt;</span> AllSigns
+  <span class="Type">|</span> Pos<span class="Type">,</span>  Zero <span class="Type">=&gt;</span> SignSet.singleton Pos
+  <span class="Type">|</span> Pos<span class="Type">,</span>  Pos  <span class="Type">=&gt;</span> SignSet.singleton Pos
+  <span class="Type">end</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+Since our implementation of &alpha; gives us an ensemble rather than a finite set, we'll write <code>signset_plus</code> to add two ensembles of signs together.
+
+
+<pre>
+<span class="PreProc">Definition</span> <span class="Identifier">signset_plus</span> P Q s <span class="PreProc">:</span> Prop <span class="PreProc">:=</span> <span class="Type">exists</span> n m<span class="Type">,</span> P n <span class="Type">/\</span> Q m <span class="Type">/\</span> SignSet.In s <span class="Type">(</span>sign_plus n m<span class="Type">)</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<h3>Proving The Signs Interpretation Sound</h3>
+
+<p>
+At last, we are ready to prove that <code>signs_plus</code> is a sound interpretation of integer addition.
+Recall that this means proving that, for sets of integers <code>P</code> and <code>Q</code>, <code>&alpha; (P + Q) &subseteq; (&alpha; P) &oplus; (&alpha; Q)</code>.
+
+<pre>
+<span class="PreProc">Lemma</span> <span class="Identifier">signset_plus_sound</span><span class="PreProc">:</span> <span class="Type">forall</span> s <span class="Type">(</span>P Q<span class="Type">:</span> Ensemble Z<span class="Type">),</span>
+  <span class="Type">(</span>alpha <span class="Type">(</span>set_plus P Q<span class="Type">))</span> s <span class="Type">-&gt;</span> <span class="Type">(</span>signset_plus <span class="Type">(</span>alpha P<span class="Type">)</span> <span class="Type">(</span>alpha Q<span class="Type">))</span> s<span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+We start by naming our premises, then recovering the two integers <code>n</code> and <code>m</code> summed together by <code>set_plus</code>.
+We also show that <code>s</code> is the sign of <code>n + m</code>.
+<pre>
+<span class="Statement">intros</span> s P Q<span class="Statement">.</span>
+<span class="Statement">unfold</span> alpha<span class="Statement">;</span> <span class="Statement">unfold</span> signset_plus<span class="Statement">.</span>
+<span class="Statement">intros</span> <span class="Statement">[</span>x <span class="Statement">[</span>Hsp Hsign_x<span class="Statement">]].</span>
+<span class="Statement">unfold</span> set_plus <span class="Statement">in</span> Hsp<span class="Statement">.</span>
+<span class="Statement">destruct</span> Hsp <span class="Statement">as</span> <span class="Statement">[</span>n <span class="Statement">[</span>m <span class="Statement">[</span>HPn <span class="Statement">[</span>HQm Hplus<span class="Statement">]]]].</span>
+<span class="Statement">rewrite</span> &lt;- Hplus <span class="Statement">in</span> Hsign_x<span class="Statement">.</span>
+</pre>
+<pre>
+1 subgoal
+s : SignSet.elt
+P, Q : Ensemble Z
+x, n, m : Z
+HPn : P n
+HQm : Q m
+Hplus : n + m = x
+Hsign_x : SignSet.In s (sign_of (n + m))
+______________________________________(1/1)
+exists n0 m0 : sign,
+  (exists n1 : Z, P n1 /\ SignSet.In n0 (sign_of n1)) /\
+  (exists n1 : Z, Q n1 /\ SignSet.In m0 (sign_of n1)) /\
+  SignSet.In s (sign_plus n0 m0)
+</pre>
+</p>
+
+<p>
+Next, we see that we need to conjure up two signs that, when added together, produce a set containing <code>s</code>.
+The signs of <code>n</code> and <code>m</code> should meet this requirement!
+We can use <code>sign_in_alpha</code> to compute those signs:
+
+<pre>
+<span class="Statement">assert</span> <span class="Statement">(</span>HPn_has_sign <span class="Statement">:=</span> HPn<span class="Statement">).</span>
+<span class="Statement">apply</span> sign_in_alpha <span class="Statement">in</span> HPn_has_sign<span class="Statement">.</span>
+<span class="Statement">destruct</span> HPn_has_sign <span class="Statement">as</span> <span class="Statement">[</span>t HPn_has_sign<span class="Statement">].</span>
+<span class="Statement">exists</span> t<span class="Statement">.</span>
+
+<span class="Statement">assert</span> <span class="Statement">(</span>HQm_has_sign <span class="Statement">:=</span> HQm<span class="Statement">).</span>
+<span class="Statement">apply</span> sign_in_alpha <span class="Statement">in</span> HQm_has_sign<span class="Statement">.</span>
+<span class="Statement">destruct</span> HQm_has_sign <span class="Statement">as</span> <span class="Statement">[</span>u HQm_has_sign<span class="Statement">].</span>
+<span class="Statement">exists</span> u<span class="Statement">.</span>
+</pre>
+<pre>
+1 subgoal
+s : SignSet.elt
+P, Q : Ensemble Z
+x, n, m : Z
+HPn : P n
+HQm : Q m
+Hplus : n + m = x
+Hsign_x : SignSet.In s (sign_of (n + m))
+t : SignSet.elt
+HPn_has_sign : SignSet.In t (sign_of n)
+u : SignSet.elt
+HQm_has_sign : SignSet.In u (sign_of m)
+______________________________________(1/1)
+(exists n0 : Z, P n0 /\ SignSet.In t (sign_of n0)) /\
+(exists n0 : Z, Q n0 /\ SignSet.In u (sign_of n0)) /\
+SignSet.In s (sign_plus t u)
+</pre>
+</p>
+
+<p>
+Next, we need to show that we haven't just plucked <code>t</code> and <code>u</code> out of thin air: there need to be corresponding integers in <code>P</code> and <code>Q</code>.
+Since we got them from <code>n</code> and <code>m</code>, we can say just that:
+
+<pre>
+<span class="Statement">split</span><span class="Statement">.</span>
+<span class="Statement">exists</span> n<span class="Statement">.</span>
+<span class="Statement">split</span><span class="Statement">.</span>
+<span class="Statement">exact</span> HPn<span class="Statement">.</span>
+<span class="Statement">exact</span> HPn_has_sign<span class="Statement">.</span>
+
+<span class="Statement">split</span><span class="Statement">.</span>
+<span class="Statement">exists</span> m<span class="Statement">.</span>
+<span class="Statement">split</span><span class="Statement">.</span>
+<span class="Statement">exact</span> HQm<span class="Statement">.</span>
+<span class="Statement">exact</span> HQm_has_sign<span class="Statement">.</span>
+</pre>
+<pre>
+1 subgoal
+s : SignSet.elt
+P, Q : Ensemble Z
+x, n, m : Z
+HPn : P n
+HQm : Q m
+Hplus : n + m = x
+Hsign_x : SignSet.In s (sign_of (n + m))
+t : SignSet.elt
+HPn_has_sign : SignSet.In t (sign_of n)
+u : SignSet.elt
+HQm_has_sign : SignSet.In u (sign_of m)
+______________________________________(1/1)
+SignSet.In s (sign_plus t u)
+</pre>
+</p>
+
+<p>
+Finally, we have to prove that <code>s</code> truly is a possible outcome of adding <code>t</code> to <code>u</code>.
+Attempting this by cases on <code>s</code>, <code>t</code>, and <code>u</code> is verbose, as it results in 14 cases where we have to derive <code>False</code> from the premises.
+It is easier to approach this as a more complex version of the proof of <code>alpha_gamma</code> and do case analysis on <code>n</code> and <code>m</code> instead.
+This way, we directly compute the possible values of <code>s</code>, <code>t</code>, and <code>u</code>, skipping impossible outcomes.
+
+<pre>
+<span class="Statement">case_eq</span> m<span class="Statement">;</span> <span class="Statement">case_eq</span> n<span class="Statement">;</span>
+</pre>
+<pre>
+9 subgoals
+s : SignSet.elt
+P, Q : Ensemble Z
+x, n, m : Z
+HPn : P n
+HQm : Q m
+Hplus : n + m = x
+Hsign_x : SignSet.In s (sign_of (n + m))
+t : SignSet.elt
+HPn_has_sign : SignSet.In t (sign_of n)
+u : SignSet.elt
+HQm_has_sign : SignSet.In u (sign_of m)
+______________________________________(1/9)
+n = 0 -> m = 0 -> SignSet.In s (sign_plus t u)
+(...)
+______________________________________(6/9)
+   forall p : positive, n = Z.neg p
+-> forall p0 : positive, m = Z.pos p0
+-> SignSet.In s (sign_plus t u)
+(...)
+</pre>
+</p>
+
+<p>
+Each of these subgoals comes with two hypotheses (to be named <code>Hn</code> and <code>Hm</code>) determining the value of <code>n</code> and <code>m</code>.
+Since their values are fixed, we can compute the value of <code>t</code> and <code>u</code>:
+
+<pre>
+<span class="Statement">intros</span> <span class="Statement">until</span> 2<span class="Statement">;</span> <span class="Statement">rename</span> H <span class="Statement">into</span> Hn<span class="Statement">;</span> <span class="Statement">rename</span> H0 <span class="Statement">into</span> Hm<span class="Statement">;</span>
+
+<span class="Statement">rewrite</span> Hn <span class="Statement">in</span> HPn_has_sign<span class="Statement">;</span>
+<span class="Statement">unfold</span> sign_of <span class="Statement">in</span> HPn_has_sign<span class="Statement">;</span>
+<span class="Statement">simpl</span> <span class="Statement">in</span> HPn_has_sign<span class="Statement">;</span>
+<span class="Statement">apply</span> SignSetProps<span class="Statement">.</span>Dec<span class="Statement">.</span>F<span class="Statement">.</span>singleton_1 <span class="Statement">in</span> HPn_has_sign<span class="Statement">;</span>
+<span class="Statement">apply</span> SignSet<span class="Statement">.</span>E<span class="Statement">.</span>eq_leibniz <span class="Statement">in</span> HPn_has_sign<span class="Statement">;</span>
+
+<span class="Statement">rewrite</span> Hm <span class="Statement">in</span> HQm_has_sign<span class="Statement">;</span>
+<span class="Statement">unfold</span> sign_of <span class="Statement">in</span> HQm_has_sign<span class="Statement">;</span>
+<span class="Statement">simpl</span> <span class="Statement">in</span> HQm_has_sign<span class="Statement">;</span>
+<span class="Statement">apply</span> SignSetProps<span class="Statement">.</span>Dec<span class="Statement">.</span>F<span class="Statement">.</span>singleton_1 <span class="Statement">in</span> HQm_has_sign<span class="Statement">;</span>
+<span class="Statement">apply</span> SignSet<span class="Statement">.</span>E<span class="Statement">.</span>eq_leibniz <span class="Statement">in</span> HQm_has_sign<span class="Statement">;</span>
+</pre>
+<pre>
+9 subgoals
+s : SignSet.elt
+P, Q : Ensemble Z
+x, n, m : Z
+HPn : P n
+HQm : Q m
+Hplus : n + m = x
+Hsign_x : SignSet.In s (sign_of (n + m))
+t : SignSet.elt
+HPn_has_sign : Zero = t
+u : SignSet.elt
+HQm_has_sign : Zero = u
+Hn : n = 0
+Hm : m = 0
+______________________________________(1/9)
+SignSet.In s (sign_plus t u)
+(...)
+</pre>
+</p>
+
+<p>
+Given fixed values for <code>t</code> and <code>u</code>, we can compute the <code>sign_plus</code> in the goals:
+
+<pre>
+<span class="Statement">rewrite</span> &lt;- HPn_has_sign<span class="Statement">;</span>
+<span class="Statement">rewrite</span> &lt;- HQm_has_sign<span class="Statement">;</span>
+<span class="Statement">unfold</span> sign_plus<span class="Statement">;</span>
+</pre>
+<pre>
+9 subgoals
+s : SignSet.elt
+P, Q : Ensemble Z
+x, n, m : Z
+HPn : P n
+HQm : Q m
+Hplus : n + m = x
+Hsign_x : SignSet.In s (sign_of (n + m))
+t : SignSet.elt
+HPn_has_sign : Zero = t
+u : SignSet.elt
+HQm_has_sign : Zero = u
+Hn : n = 0
+Hm : m = 0
+______________________________________(1/9)
+SignSet.In s (SignSet.singleton Zero)
+(...)
+______________________________________(6/9)
+SignSet.In s AllSigns
+(...)
+</pre>
+</p>
+
+<p>
+For some of the goals (such as goal 6 shown above), we are all but done.
+The others need us to compute the value of <code>s</code>, which we can do from <code>Hsign_x</code>:
+
+<pre>
+<span class="Statement">rewrite</span> Hn <span class="Statement">in</span> Hsign_x<span class="Statement">;</span>
+<span class="Statement">rewrite</span> Hm <span class="Statement">in</span> Hsign_x<span class="Statement">;</span>
+<span class="Statement">unfold</span> sign_of <span class="Statement">in</span> Hsign_x<span class="Statement">;</span>
+<span class="Statement">simpl</span> <span class="Statement">in</span> Hsign_x<span class="Statement">;</span>
+</pre>
+<pre>
+9 subgoals
+s : SignSet.elt
+P, Q : Ensemble Z
+x, n, m : Z
+HPn : P n
+HQm : Q m
+Hplus : n + m = x
+Hsign_x : SignSet.In s (SignSet.singleton Zero)
+t : SignSet.elt
+HPn_has_sign : Zero = t
+u : SignSet.elt
+HQm_has_sign : Zero = u
+Hn : n = 0
+Hm : m = 0
+______________________________________(1/9)
+SignSet.In s (SignSet.singleton Zero)
+(...)
+______________________________________(6/9)
+SignSet.In s AllSigns
+(...)
+</pre>
+</p>
+
+<p>
+Now, either <code>Hsign_x</code> is the goal we're trying to prove, or we can't compute <code>s</code>, in which case <code>in_allsigns</code> applies:
+
+<pre>
+<span class="Statement">try</span> <span class="Statement">exact</span> Hsign_x<span class="Statement">;</span>
+<span class="Statement">try</span> <span class="Statement">apply</span> in_allsigns<span class="Statement">.</span>
+<span class="Underlined">Qed</span><span class="PreProc">.</span>
+</pre>
+</p>
+
+<p>
+For those of you curious, in goals where <code>s</code> cannot be computed, <code>simpl in Hsign_x</code> gets stuck on the <code>match</code>:
+<pre>
+Hsign_x : SignSet.In s
+            match Z.pos_sub p0 p ?= 0 with
+            | Eq => SignSet.singleton Zero
+            | Lt => SignSet.singleton Neg
+            | Gt => SignSet.singleton Pos
+            end
+</pre>
+</p>
+
+<p>
+And that's it! One abstract interpretation and it only took about 300 lines of Coq to prove it.
+</p>
+
+<h3>Conclusions</h3>
+
+<p>
+For a starter project in Coq, this wasn't a half bad choice.
+Most of the proofs are pretty straightforward, which gave me a lot of practice with the mechanics of theorem proving.
+There are also some nontrivial proofs which really get at the heart of constructive logic/proofs as computation.
+Overall, it's been fun AND educational!
+</p>
+
+<p>
+From here, I could build on this machinery to make abstract interpretations of other integer operations (e.g., multiplication and exponentiation).
+That could be built into a proper abstract interpretation machine for algebraic expressions.
+</p>
+
+<p>
+One thing that concerns me is that the way Coq defines integers as either positive, zero, or negative might mean that a lot of these proofs were easier than they &ldquo;ought&rdquo; to be.
+This is especially my concern in the proofs of <code>alpha_gamma</code> and <code>signset_plus_sound</code>.
+Perhaps developing an abstract interpretation on intervals would teach more about case splitting and the limitations of symbolic computation on integers.
+</p>
+
+<p>
+Another frustration is that <code>signset_plus</code> works over ensembles rather than concrete set representations, so it isn't a candidate for code extraction.
+While I have written <a href="https://github.com/LinuxMercedes/abs-int/blob/mistress/sign.v#L274-L277">a version that uses finite sets</a>,
+I don't know how to either connect it to ensembles of integers or how to prove that it is equivalent to <code>signset_plus</code>.
+I'll have to think on that some more.
+</p>
+
+</body>
+</html>
