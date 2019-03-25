@@ -819,8 +819,10 @@ For the most part the sign of the result is known exactly; however, the example 
 <p>
 It is easiest to define <code>sign_plus</code> by exhaustively writing out the cases.
 (We could take advantage of commutativity to reduce the cases by half, but Coq requires that the recursion terminate and can't see that the operation is commutative.
-That can be solved by using some &ldquo;gas&rdquo;, but that makes <a href="https://github.com/LinuxMercedes/abs-int/blob/mistress/sign.v#L256-L272">the function</a>
-more complex and less obviously correct.)
+That can be solved by using
+<a href="https://github.com/LinuxMercedes/abs-int/blob/320c6c182436f531d9d95678561ff9d2319d7784/sign.v#L256-L274">&ldquo;gas&rdquo;</a> or
+<a href="https://github.com/LinuxMercedes/abs-int/blob/320c6c182436f531d9d95678561ff9d2319d7784/sign.v#L276-L309">a measure of &ldquo;decreasing&rdquo;ness</a>,
+but that makes the function more complex and less obviously correct.)
 
 <pre>
 <span class="PreProc">Definition</span> <span class="Identifier">sign_plus</span> <span class="PreProc">(</span>n<span class="PreProc">:</span> sign<span class="PreProc">)</span> <span class="PreProc">(</span>m<span class="PreProc">:</span> sign<span class="PreProc">)</span> <span class="PreProc">:</span> SignSet.t <span class="PreProc">:=</span>
@@ -1145,7 +1147,7 @@ Perhaps developing an abstract interpretation on intervals would teach more abou
 
 <p>
 Another frustration is that <code>signset_plus</code> works over ensembles rather than concrete set representations, so it isn't a candidate for code extraction.
-While I have written <a href="https://github.com/LinuxMercedes/abs-int/blob/mistress/sign.v#L274-L277">a version that uses finite sets</a>,
+While I have written <a href="https://github.com/LinuxMercedes/abs-int/blob/320c6c182436f531d9d95678561ff9d2319d7784/sign.v#L311-L329">a version that uses finite sets</a>,
 I don't know how to either connect it to ensembles of integers or how to prove that it is equivalent to <code>signset_plus</code>.
 I'll have to think on that some more.
 I suppose I should finish reading <a href="https://arxiv.org/abs/1511.06965">Constructive Galois Connections</a> as it probably has some insight on this problem!
