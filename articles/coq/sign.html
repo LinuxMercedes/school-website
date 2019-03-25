@@ -16,7 +16,12 @@ br { clear: both; }
 
 <h2>Interpreting + Abstractly with Signs</h2>
 <p>
-Something about abstract interpretation.
+Abstract interpretation is a technique for statically analyzing programs&mdash;analyzing them without executing them.
+The main idea is to translate the hard-to-analyze program on &ldquo;concrete&rdquo; data into easy-to-analyze computations on &ldquo;abstract&rdquo; data
+that contains the information you want to know about the program.
+</p>
+
+<p>
 This article will talk about the set-of-signs abstract domain, abstractly interpreting addition with sets of signs, and proving the soundness of that interpretation using Coq.
 This is the first in a series of articles on abstract interpretation in Coq.
 We'll focus on the specific details of this interpretation and leave the general formulation of abstract interpretation for the future.
