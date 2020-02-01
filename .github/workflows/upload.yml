@@ -1,0 +1,21 @@
+name: Upload
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Upload site to mst.edu
+        uses: SamKirkland/FTP-Deploy-Action@2.0.0
+        env: 
+          FTP_SERVER: minersftp.mst.edu
+          FTP_USERNAME: ${{ secrets.SFTP_USER }}
+          FTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+          METHOD: sftp
+          LOCAL_DIR: ${{ github.workspace }}
+          REMOTE_DIR: /userweb/nmjxv3
