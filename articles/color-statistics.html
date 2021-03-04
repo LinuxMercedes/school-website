@@ -1,0 +1,291 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>Is it easier to tell what color a ball is or if it is red?</title>
+<link href="../style.css" rel="stylesheet" type="text/css">
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+<div>
+	<a href="..">Home</a> <a href="index.html">Articles</a>
+	<small style="float:right;">2021/03/04</small>
+	<hr>
+</div>
+<h2>Is it easier to tell what color a ball is or if it is red?</h2>
+
+<p><i>This is a draft post which will hopefully be expanded on in the future.</i></p>
+
+<h3>Introduction</h3>
+<p>
+While analyzing some data for a research project, I noticed effect A seemed a lot harder to get a significant result for compared to a closely related effect B.
+I wanted to know if it was actually the case that A was harder to &ldquo;prove&rdquo; than B, or if we should be supsicious of our signifcant B effects since their A counterparts weren't significant.
+Intuitively, it seemed like A could be harder to prove than B, but I wanted to be able to make a more solid argument than &ldquo;seems right to me!&rdquo;
+Unfortunately, my statistics education and a few web searches did not offer much advice on how to compare significance levels for different tests.
+This article describes how I went about trying to answer this question and the conclusions I reached.
+</p>
+
+<p>
+To make this question more accessible, I simplified it to: &ldquo;Is it easier to tell what color a ball is or if it is red?&rdquo;
+As it turns out, this is slightly <i>too</i> simplified, but it's simple enough to pose to people online and get good speculative answers and ideas that I had not considered.
+Some set about describing how a color detector might work; it seems the answer depends on the technology used for the detector.
+Others took an information-theoretic approach: whether a ball is red is 1 bit of information, but what color it is is more than 1 bit if you have more than two color possibilities.
+Philosophy has a plethora of interesting questions to ask about what it means to &ldquo;be a color&rdquo;; these are well beyond my ability to answer.
+We can also discuss this in terms of how reliable the tests are, how many are performed, and what conditions they're performed under.
+A hypothesis testing perspective suggests we test a hypothesis for each color, or perhaps with clever hypothesis design we can test \(\log_2(\text{# of colors})\) hypotheses.
+</p>
+
+<p>
+All these ideas, as well as a late-night trip to Wikipedia, led me to a solution that's convincing enough, at least for me.
+We'll start with a more explicit statistical &ldquo;experiment&rdquo; that describes the data we want to analyze.
+Next, we'll ask two questions of this data and explore how we might answer them.
+This leads us to an answer for our original question, &ldquo;how do we say whether effect A is harder to prove than effect B?&rdquo;
+Finally, we'll draw connections to some statistical measures of serial dependence in time-series data.
+</p>
+
+<h3>The Experiment</h3>
+<p>
+Say we have balls, one for each of \(C\) colors, e.g., a red ball, a green ball, and a violet ball.
+We do an experiment where we randomly pick a ball and put it in front of a color detector, then note down both the color of the ball and the color reported by the detector.
+If we let the random variable \(X\) represent the color of the ball and \(Y\) the reported color, this experiment gives a series of observations \((X_i, Y_i), 0 \leq i \lt T\)
+of a bivariate distribution.
+Our experimenter picks balls blindfolded, so the observations \(X_i\) are independent and identically distributed.
+</p>
+
+<h3>Question 1: Is the color detector right?</h3>
+<p>
+Suppose we want to know whether the color detector is right; that is, if it's given a red ball, does it report red?
+And so on for each color.
+If \(X\) and \(Y\) are independent &mdash; that is, the color detector is picking answers at random with no regard to the actual color of the ball &mdash;
+then \(P(X = c, Y = c) = P(X = c)P(Y = c)\) for all colors \(c \in C\).
+If the color detector is &ldquo;truthy&rdquo;, then \(P(X = c, Y = c) \gt P(X = c)P(Y = c)\), and if it's actively being deceptive, then \(P(X = c, Y = c) \lt P(X = c)P(Y = c)\).
+</p>
+
+<p>
+However, we don't actually know any of these values; we just have the observations \((X_i, Y_i)\) to work from.
+How do we decide if our estimates for \(P(X = c)\), \(P(Y = c)\), and \(P(X = c, Y = c)\) indicate that we can believe the detector right (or wrong)?
+</p>
+
+<p>
+To measure how right the detector is, we define the random variable \(Z_T\) to be the number of times the detector gave the right answer in \(T\) observations.
+In other words, \(Z_T = \sum_{i = 0}^T \mathbf{I}(X_i, Y_i)\) where \(\mathbf{I}\) is the indicator function that returns 1 if its inputs are equal and 0 otherwise.
+\(Z_T\) follows a Bernoulli distribution<a id="footnote-bernoulli-ref" href="#footnote-bernoulli" title="link to footnote"><sup>1</sup></a>
+with \(T\) trials and a probability of success \(p = {1 \over T} \sum_{i = 0}^T \mathbf{I}(X_i,Y_i)\).
+</p>
+
+<p>
+A relevant fact is that a Bernoulli distribution \(\mathcal{B}(T,p)\) with sufficiently large \(T\) and \(p\) not near 0 or 1 can be approximated by a normal distribution \(\mathcal{N}(Tp, Tp(1-p))\).
+In the case that our \(Y_i\) are independent and identically distributed &mdash; the case that the detector is making answers up as it pleases &mdash;
+\(p = p_{i.i.d.} = \sum_{c \in C} p_{X,c} p_{Y,c}\) where \(p_{V,c} = {1 \over T} \sum_{i = 0}^T \mathbf{I}(V_i, c)\) is the probability of observing color \(c\) in observations \(V_i\).
+Thus, we can use significance testing to determine if \(Z_T\) follows a \(\mathcal{N}(Tp_{i.i.d.}, Tp_{i.i.d.}(1-p_{i.i.d.}))\) distribution.
+One testing approach is to calculate the lower and upper critical values directly from the normal distribution above.
+Alternatively, we can normalize \(Z_T\) into \(\overline{Z}_T\) such that \(\overline{Z}_T\) follows the &ldquo;standard normal&rdquo; distribution, \(\mathcal{N}(0,1)\), when \(X\) and \(Y\) are independent.<a id="footnote-normalize-ref" href="#footnote-normalize" title="link to footnote"><sup>2</sup></a>
+Then \(\overline{Z}_T^2\) follows a chi-squared distribution<a id="footnote-chisq-ref" href="#footnote-chisq" title="link to footnote"><sup>3</sup></a>
+with one degree of freedom, \(\chi^2_1\), and the independence of \(X\) and \(Y\) can be tested using a \(\chi^2\) significance test.
+</p>
+
+<h3>Question 2: <i>Could</i> the detector be right?</h3>
+<p>
+This is all well and good, but suppose we let Wittgenstein or Quine loose in the lab before the experiment and they explained referential inscrutability to the color detector.
+Now the color detector still works or doesn't work, but it also might have mixed up its labels for colors so that, for example, it calls &ldquo;green&rdquo; what we'd call &ldquo;red&rdquo;.
+Can we tell if it's just making stuff up or if there is some method to its madness &mdash; a mapping from its outputs to the &ldquo;right&rdquo; answers?
+In short, can we tell whether it <i>could</i> be right?
+</p>
+
+<p>
+We can even relax this question a little by letting the detector, say, report &ldquo;green&rdquo; for both &ldquo;red&rdquo; and &ldquo;yellow&rdquo; balls.
+This question is equivalent to asking whether there is a mapping \(\phi : C \to C\) such that \(P(X = c, Y = \phi(c)) \gt P(X = c)P(Y = c)\).
+In other words, can we figure out a way of assigning our color labels to the answers given by the color detector?
+Note that our first question, &ldquo;is the detector right?&rdquo;, is a special case of this broader question where we assume \(\phi(c) = c\) &mdash; that is, no relabeling happens.
+</p>
+
+<p>
+As an aside, from a formal logic perspective, we can see that question 2 is more complex to ask.
+Question 1 asks if \(\forall i, X_i = Y_i\).
+Question 2 asks if \(\exists \phi, \forall i, X_i = \phi(Y_i)\).
+Since there's an extra quantifier, we might anticipate that answering question 2 would require a longer proof or more powerful proof techniques.
+</p>
+
+<p>
+We can split this up into \(|C|^2\) Bernoulli trials, each counting the number of times the detector gave the reply \(r \in C\) for a ball of color \(c\).
+Define \(Z_T^{c,r}\) to be the number of times \((c,r)\) appears in \(T\) observations of \((X,Y)\).
+This variable follows a Bernoulli distribution with \(T\) trials and \(p^{c,r} = {1 \over T}\sum_{i = 0}^T\mathbf{I}(X_i,c)\mathbf{I}(Y_i,r)\) &mdash;
+the probability that \(X_i = c\) and \(Y_i = r\).
+If \(X\) and \(Y\) are independent, we have \(p^{c,r} = p_{i.i.d.}^{c,r} = p_{X,c}p_{Y,r}\).
+</p>
+
+<p>
+As an example, let \(C = \{R,G,V\}\) (&ldquo;red&rdquo;, &ldquo;green&rdquo;, and &ldquo;violet&rdquo;) be our color space.
+We can arrange the Bernoulli trial probabilities for the independent case into a matrix as shown:
+\begin{equation*}
+	\begin{bmatrix}
+		p_{X,R}p_{Y,R} & p_{X,R}p_{Y,G} & p_{X,R}p_{Y,V} \\
+		p_{X,G}p_{Y,R} & p_{X,G}p_{Y,G} & p_{X,G}p_{Y,V} \\
+		p_{X,V}p_{Y,R} & p_{X,V}p_{Y,G} & p_{X,V}p_{Y,V} \\
+	\end{bmatrix}
+\end{equation*}
+Notice that each row sums to \(p_{X,c}\) and each column sums to \(p_{Y,c}\), so while we have \(|C|^2\) entries, only \((|C|-1)^2\) of them are independent.
+Let \(C^*\) be the set of colors \(C\) with one removed; in this example, we might let \(C^* = \{R,G\}\).
+Thus we have \((|C|-1)^2\) independent Bernoulli trials \(Z_T^{c,r}\) where \(c,r \in C^*\).
+</p>
+
+<p>
+Normalize the \(Z_T^{c,r}\) into \(\overline{Z}_T^{c,r}\) so that they follow the standard normal distribution when \(X\) and \(Y\) are independent.
+Let \(Q = \sum_{c,r \in C^*} \left(\overline{Z}_T^{c,r}\right)^2\) be the sum of these independent standard normal random variables.
+Then, in the case \(X\) and \(Y\) are independent, \(Q\) follows a \(\chi^2\) distribution with \((|C|-1)^2\) degrees of freedom.
+</p>
+
+<h3>Summary</h3>
+<p>
+To summarize: if we want to know whether the detector is right, the significance test critical values are taken from the \(\chi^2_1\) distribution.
+If we want to know whether there is a way it could be right, the critical values are taken from the \(\chi^2_{(|C|-1)^2}\) distribution.
+<p>
+
+<p>
+As shown in Figure 1, the more degrees of freedom in the distribution, the longer the \(\chi^2\) CDF takes to converge to 1.
+To visually find the critical value for a significance test, pick a significance level \(\alpha\), then draw a horizontal line on the CDF at \(1 - \alpha\).
+The critical value is the \(x\) value where the CDF crosses that horizontal line.
+Test statistic values greater than the critical value are considered to demonstrate a statistically significant effect.
+In more familiar terms, the \(p\) value for a given test statistic value \(x\) is \(1 - F_k(x)\); if that \(p\) value is larger than \(1-\alpha\), the result is significant.
+</p>
+
+<p>
+The critical values are lower for the first question than the second assuming we have at least 3 colors to pick between.
+For the above example, compare the CDF for \(k = 1\) (Q1) to \(k = 4\) (Q2).
+</p>
+
+<p>
+Which is to say: it takes a less extreme effect to determine that a detector is right.
+Determining whether it <i>might</i> be right or if it's just talking nonsense requires a stronger effect.<a id="footnote-handwave-ref" href="#footnote-handwave" text="link to footnote"><sup>4</sup></a>
+</p>
+
+<p>
+<center><img width="50%" src="https://upload.wikimedia.org/wikipedia/commons/0/01/Chi-square_cdf.svg"></center>
+<br>
+Figure 1: \(\chi^2\) cumulative distribution function for 1&ndash;9 degrees of freedom.
+<br>
+Source: <a href="https://en.wikipedia.org/wiki/File:Chi-square_cdf.svg">Wikipedia</a>
+</p>
+
+
+<h3>Serial Dependence</h3>
+
+<p>
+All this play in the statistical ball pit is not just for fun, but was motivated by questions about statistics that you won't find so easily in a Chuck-e-Cheese.
+My research has led me into the realm of Categorical Time Series Analysis.
+A time series is a sequence of observations; for instance, the outside temperature measured every hour.
+These are used all over the place to study weather, heart rhythms, stock market performance, and so on.
+Our data happens to be categorical, meaning that it takes discrete values with no inherent ordering.
+Categorical models appear in a variety of places; for instance, studies of sleep phases and bird calls.
+While real-valued data can be averaged, sorted from least to greatest, and run through all kinds of functions, the operations that are allowed for categorical data are much more restricted.
+Since we can't compute the average, median, or expected value of a categorical distribution, the statistical techniques for it are a bit different from their real-valued counterparts.
+</p>
+
+<p>
+We'll focus on measures of <i>categorical serial dependence</i>, which is analogous to <i>autocorrelation</i> for real-valued time series.
+These measures ask, &ldquo;does knowing part of a time series help predict the rest?&rdquo; or, &ldquo;how repetitive is this time series?&rdqo;
+We'll ask these for a particular time offset, called <i>lag</i>: given an observation at time \(t-k\), what can we say about the observation at time \(t\)?
+Depending on the answer, we observe one of several effects:
+<ul>
+	<li><i>Serial Independence</i> occurs when observing \(c\) at \(t-k\) gives no insight into what might be observed at \(t\).</li>
+	<li><i>Unsigned Serial Dependence</i> occurs when observing \(c\) at \(t-k\) gives perfect insight into what is observed at \(t\).</li>
+	<li><i>Positive Serial Dependence</i> occurs when observing \(c\) at \(t-k\) means we observe \(c\) again at \(t\).</li>
+	<li><i>Negative Serial Dependence</i> occurs when observing \(c\) at \(t-k\) means we will not observe \(c\) at \(t\).</li>
+</ul>
+Unsigned serial dependence is a measure of how <i>repetitive</i> a dataset is: if we always see \(R\) followed by \(G)\, this gives some amount of unsigned serial dependence at lag 1.
+Signed serial depndence is a measure of how <i>self-similar</i> a dataset is: if we always see \(R\) followed by \(R)\, we have some signed serial dependence.
+</p>
+
+<p>
+Notice that wherever we have signed serial dependence, we also have unsigned serial dependence.
+However, the reverse is not true.
+Unsigned serial dependence is harder to prove precisely <i>because</i> it encompasses more possible relationships among the data.
+</p>
+
+<p>
+We can relate the questions asked of our colored balls data to serial dependence measures at lag \(k\).
+In these measures, the categorical labels correspond to &ldquo;colors&rdquo; and our random variables are \(X_{t-k} = X\) and \(X_t = Y\).
+Denote the marginal probabilities of each category by \(\pi_c = P(X_t = c)\); when estimating from samples, \(\pi_c = p_{X,c} = p_{Y,c}\).
+Lastly, we define the <i>lagged bivariate probability</i> \(p_{cr} = P(X_{t-k} = c, X_t = r) = P(X = c, Y = r)\); when estimated, \(p_{cr} = p^{c,r}\).
+</p>
+
+<p>
+Signed serial dependence corresponds to the first question: \(X_t\) and \(X_{t-k}\) have to match, just like \(X\) and \(Y\) have to match in the colored balls experiment.
+In statistical terms, we get perfect signed serial depencence under these conditions:
+<ul>
+	<li><i>Positive dependence</i>: \(p_{cc} = \pi_c\), or \(P(X = c, Y = c) = P(X = c)\) for all \(c\).</li>
+	<li><i>Negative dependence</i>: \(p_{cc} = 0\), or \(P(X = c, Y = c) = 0\) for all \(c\).</li>
+</ul>
+Common measures for signed serial dependence are Cohen's \(\kappa\) and several modifications thereof, denoted \(\kappa^*\) and \(\kappa^\star\).
+All these measures have been shown to be normally distributed when estimated from i.i.d. time series data and thus can be tested using a \(\chi^2_1\) distribution,
+just as with our Bernoulli trial test for question 1.
+</p>
+
+<p>
+Unsigned serial dependence corresponds to the second question: &ldquo;perfect insight&rdquo; corresponds to picking a mapping \(\phi\)
+that allows us to predict \(X_t\) from \(X_{t-k}\).
+In statistical terms, we get perfect unsigned serial dependence when we can pick \(r = \phi(c)\) so that \(p_{cr} = \pi_c\) or \(P(X = c, Y = r) = P(X = c)\) for all \(c\).
+A common measure of unsigned serial dependence is Cramer's (\v\), which follows a \(\chi^2_{d^2}\) distribution when estimated from i.i.d. time series data having \(d+1\) categories,
+just as with our Bernoulli trial test for question 2.
+</p>
+
+<p>
+The Bernoulli trial statistics developed here don't exactly follow the properties one would desire of serial dependence measures,
+which is why we use Cramer's \(v\), Cohen's \(\kappa\), \(\kappa^*\), and \(\kappa^\star\) instead.
+However, they offer an intuitive sense for how one might design such a test.
+It is significantly easier to see why they follow \(\chi^2\) distributions when estimated from i.i.d. data
+than it is to follow the proofs for the above test statistics.
+See <i>Further Reading</i> for far more detail on serial dependence measures.
+</p>
+
+<h3>Epilogue</h3>
+
+<p>
+I am not a statistician, as you can probably tell.
+This argument features a few handwaved bits which I would be very interested in shoring up.
+If you have thoughts on how to improve this argument or if you spot a hole in it, I'd like to hear!
+Also, if there's articles written about related topics, please send them my way.
+Write me an <a href="mailto:jarus@mst.edu">email</a>, or if you got this through social media, replies there are good too.
+</p>
+
+<h3>Further Reading</h3>
+<div class="csl-bib-body" style="line-height: 1.35; ">
+  <div class="csl-entry" style="clear: left; ">
+    <div class="csl-left-margin" style="float: left; padding-right: 0.5em;text-align: right; width: 1em;">[1]</div><div class="csl-right-inline" style="margin: 0 .4em 0 1.5em;">C. H. Weiß and R. Göb, “Measuring serial dependence in categorical time series,” <i>AStA</i>, vol. 92, no. 1, pp. 71–89, Feb. 2008, doi: <a href="https://doi.org/10.1007/s10182-008-0055-4">10.1007/s10182-008-0055-4</a>.</div>
+  </div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_id=info%3Adoi%2F10.1007%2Fs10182-008-0055-4&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle=Measuring%20serial%20dependence%20in%20categorical%20time%20series&amp;rft.jtitle=AStA%20Advances%20in%20Statistical%20Analysis&amp;rft.stitle=AStA&amp;rft.volume=92&amp;rft.issue=1&amp;rft.aufirst=Christian%20H.&amp;rft.aulast=Wei%C3%9F&amp;rft.au=Christian%20H.%20Wei%C3%9F&amp;rft.au=Rainer%20G%C3%B6b&amp;rft.date=2008-02-01&amp;rft.pages=71-89&amp;rft.spage=71&amp;rft.epage=89&amp;rft.issn=1863-818X&amp;rft.language=en"></span>
+  <div class="csl-entry" style="clear: left; ">
+    <div class="csl-left-margin" style="float: left; padding-right: 0.5em;text-align: right; width: 1em;">[2]</div><div class="csl-right-inline" style="margin: 0 .4em 0 1.5em;">C. H. Weiß, “Serial dependence of NDARMA processes,” <i>Computational Statistics &amp; Data Analysis</i>, vol. 68, pp. 213–238, Dec. 2013, doi: <a href="https://doi.org/10.1016/j.csda.2013.07.009">10.1016/j.csda.2013.07.009</a>.</div>
+  </div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_id=info%3Adoi%2F10.1016%2Fj.csda.2013.07.009&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle=Serial%20dependence%20of%20NDARMA%20processes&amp;rft.jtitle=Computational%20Statistics%20%26%20Data%20Analysis&amp;rft.stitle=Computational%20Statistics%20%26%20Data%20Analysis&amp;rft.volume=68&amp;rft.aufirst=Christian%20H.&amp;rft.aulast=Wei%C3%9F&amp;rft.au=Christian%20H.%20Wei%C3%9F&amp;rft.date=2013-12-01&amp;rft.pages=213-238&amp;rft.spage=213&amp;rft.epage=238&amp;rft.issn=0167-9473&amp;rft.language=en"></span>
+  <div class="csl-entry" style="clear: left; ">
+    <div class="csl-left-margin" style="float: left; padding-right: 0.5em;text-align: right; width: 1em;">[3]</div><div class="csl-right-inline" style="margin: 0 .4em 0 1.5em;">C. H. Weiß, “Measures of Dispersion and Serial Dependence in Categorical Time Series,” <i>Econometrics</i>, vol. 7, no. 2, Art. no. 2, Jun. 2019, doi: <a href="https://doi.org/10.3390/econometrics7020017">10.3390/econometrics7020017</a>.</div>
+  </div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_id=info%3Adoi%2F10.3390%2Feconometrics7020017&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle=Measures%20of%20Dispersion%20and%20Serial%20Dependence%20in%20Categorical%20Time%20Series&amp;rft.jtitle=Econometrics&amp;rft.volume=7&amp;rft.issue=2&amp;rft.aufirst=Christian%20H.&amp;rft.aulast=Wei%C3%9F&amp;rft.au=Christian%20H.%20Wei%C3%9F&amp;rft.date=2019-06&amp;rft.pages=17&amp;rft.language=en"></span>
+
+<hr>
+
+<p id="footnote-bernoulli"> 1.
+If \(X \sim \mathcal{B}(n,p)\), the probability \(P(X = k)\) is the chance of getting \(k\) successes in \(n\) independent trials with probability of success \(p\).
+<a href="#footnote-bernoulli-ref" text="return to text">&#8617;</a>
+</p>
+
+<p id="footnote-normalize"> 2.
+If \(X \sim \mathcal{N}(\mu,\sigma^2)\), we can normalize this to \(\overline{X} = \frac{X - \mu}{\sigma} \sim \mathcal{N}(0,1)\).
+<a href="#footnote-normalize-ref" text="return to text">&#8617;</a>
+</p>
+
+<p id="footnote-chisq"> 3.
+Given random variables \(X_i \sim \mathcal{N}(0,1)\), the random variable \(Q = \sum_{i = 0}^k X_i^2\) follows the distribution \(\chi^2_k\).
+<a href="#footnote-chisq-ref" text="return to text">&#8617;</a>
+</p>
+
+<p id="footnote-handwave"> 4.
+There is some handwaving here; namely, we assume the effect of scaling to standard normal distributions is approximately equivalent for both questions.
+Whether this is true is somewhat difficult to show; fortunately, it has little effect on the overall conclusion,
+which concerns measures which empirically produce similar-scale values when evaluated on the same dataset.
+<a href="#footnote-handwave-ref" text="return to text">&#8617;</a>
+</p>
+
+</body>
+</html>
