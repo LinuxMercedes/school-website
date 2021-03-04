@@ -21,7 +21,7 @@
 <h3>Introduction</h3>
 <p>
 While analyzing some data for a research project, I noticed effect A seemed a lot harder to get a significant result for compared to a closely related effect B.
-I wanted to know if it was actually the case that A was harder to &ldquo;prove&rdquo; than B, or if we should be supsicious of our signifcant B effects since their A counterparts weren't significant.
+I wanted to know if it was actually the case that A was harder to &ldquo;prove&rdquo; than B, or if we should be suspicious of our significant B effects since their A counterparts weren't significant.
 Intuitively, it seemed like A could be harder to prove than B, but I wanted to be able to make a more solid argument than &ldquo;seems right to me!&rdquo;
 Unfortunately, my statistics education and a few web searches did not offer much advice on how to compare significance levels for different tests.
 This article describes how I went about trying to answer this question and the conclusions I reached.
@@ -185,7 +185,7 @@ Since we can't compute the average, median, or expected value of a categorical d
 
 <p>
 We'll focus on measures of <i>categorical serial dependence</i>, which is analogous to <i>autocorrelation</i> for real-valued time series.
-These measures ask, &ldquo;does knowing part of a time series help predict the rest?&rdquo; or, &ldquo;how repetitive is this time series?&rdqo;
+These measures ask, &ldquo;does knowing part of a time series help predict the rest?&rdquo; or, &ldquo;how repetitive is this time series?&rdquo;
 We'll ask these for a particular time offset, called <i>lag</i>: given an observation at time \(t-k\), what can we say about the observation at time \(t\)?
 Depending on the answer, we observe one of several effects:
 <ul>
@@ -194,8 +194,8 @@ Depending on the answer, we observe one of several effects:
 	<li><i>Positive Serial Dependence</i> occurs when observing \(c\) at \(t-k\) means we observe \(c\) again at \(t\).</li>
 	<li><i>Negative Serial Dependence</i> occurs when observing \(c\) at \(t-k\) means we will not observe \(c\) at \(t\).</li>
 </ul>
-Unsigned serial dependence is a measure of how <i>repetitive</i> a dataset is: if we always see \(R\) followed by \(G)\, this gives some amount of unsigned serial dependence at lag 1.
-Signed serial depndence is a measure of how <i>self-similar</i> a dataset is: if we always see \(R\) followed by \(R)\, we have some signed serial dependence.
+Unsigned serial dependence is a measure of how <i>repetitive</i> a dataset is: if we always see \(R\) followed by \(G\), this gives some amount of unsigned serial dependence at lag 1.
+Signed serial dependence is a measure of how <i>self-similar</i> a dataset is: if we always see \(R\) followed by \(R\), we have some signed serial dependence.
 </p>
 
 <p>
@@ -213,7 +213,7 @@ Lastly, we define the <i>lagged bivariate probability</i> \(p_{cr} = P(X_{t-k} =
 
 <p>
 Signed serial dependence corresponds to the first question: \(X_t\) and \(X_{t-k}\) have to match, just like \(X\) and \(Y\) have to match in the colored balls experiment.
-In statistical terms, we get perfect signed serial depencence under these conditions:
+In statistical terms, we get perfect signed serial dependence under these conditions:
 <ul>
 	<li><i>Positive dependence</i>: \(p_{cc} = \pi_c\), or \(P(X = c, Y = c) = P(X = c)\) for all \(c\).</li>
 	<li><i>Negative dependence</i>: \(p_{cc} = 0\), or \(P(X = c, Y = c) = 0\) for all \(c\).</li>
