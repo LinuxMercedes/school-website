@@ -5,6 +5,9 @@
 <link href="../style.css" rel="stylesheet" type="text/css">
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+p { line-height: 1.5; }
+</style>
 </head>
 <body>
 <div>
@@ -16,7 +19,7 @@
 
 <p><i>This is a draft post which will hopefully be expanded on in the future.</i></p>
 
-<noscript>The only Javascript used on this page is MathJax for equation typesetting. Unfortunately, some equations are too complex to be easily typeset using HTML and Unicode alone.</noscript>
+<noscript><p>The only Javascript used on this page is MathJax for equation typesetting. Unfortunately, some equations are too complex to be easily typeset using HTML and Unicode alone.</p></noscript>
 
 <h3>Introduction</h3>
 <p>
@@ -188,12 +191,14 @@ We'll focus on measures of <i>categorical serial dependence</i>, which is analog
 These measures ask, &ldquo;does knowing part of a time series help predict the rest?&rdquo; or, &ldquo;how repetitive is this time series?&rdquo;
 We'll ask these for a particular time offset, called <i>lag</i>: given an observation at time \(t-k\), what can we say about the observation at time \(t\)?
 Depending on the answer, we observe one of several effects:
+</p><p>
 <ul>
 	<li><i>Serial Independence</i> occurs when observing \(c\) at \(t-k\) gives no insight into what might be observed at \(t\).</li>
 	<li><i>Unsigned Serial Dependence</i> occurs when observing \(c\) at \(t-k\) gives perfect insight into what is observed at \(t\).</li>
 	<li><i>Positive Serial Dependence</i> occurs when observing \(c\) at \(t-k\) means we observe \(c\) again at \(t\).</li>
 	<li><i>Negative Serial Dependence</i> occurs when observing \(c\) at \(t-k\) means we will not observe \(c\) at \(t\).</li>
 </ul>
+</p><p>
 Unsigned serial dependence is a measure of how <i>repetitive</i> a dataset is: if we always see \(R\) followed by \(G\), this gives some amount of unsigned serial dependence at lag 1.
 Signed serial dependence is a measure of how <i>self-similar</i> a dataset is: if we always see \(R\) followed by \(R\), we have some signed serial dependence.
 </p>
@@ -214,10 +219,12 @@ Lastly, we define the <i>lagged bivariate probability</i> \(p_{cr} = P(X_{t-k} =
 <p>
 Signed serial dependence corresponds to the first question: \(X_t\) and \(X_{t-k}\) have to match, just like \(X\) and \(Y\) have to match in the colored balls experiment.
 In statistical terms, we get perfect signed serial dependence under these conditions:
+</p><p>
 <ul>
 	<li><i>Positive dependence</i>: \(p_{cc} = \pi_c\), or \(P(X = c, Y = c) = P(X = c)\) for all \(c\).</li>
 	<li><i>Negative dependence</i>: \(p_{cc} = 0\), or \(P(X = c, Y = c) = 0\) for all \(c\).</li>
 </ul>
+</p><p>
 Common measures for signed serial dependence are Cohen's \(\kappa\) and several modifications thereof, denoted \(\kappa^*\) and \(\kappa^\star\).
 All these measures have been shown to be normally distributed when estimated from i.i.d. time series data and thus can be tested using a \(\chi^2_1\) distribution,
 just as with our Bernoulli trial test for question 1.
