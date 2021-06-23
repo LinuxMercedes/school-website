@@ -26,17 +26,17 @@ advised by <a href="http://web.mst.edu/~sedighs">Dr. Sahra Sedigh Sarvestani</a>
 <h3><a href="teaching.html">Teaching</a></h3>
 
 <div style="clear:none">
-<p> <h3>Research</h3>: Abstract Interpretation of Cyber-Physical System Models</p>
+<p> <h3>Research</h3>: Sound Metamodeling Foundations for Complex Hybrid Systems</p>
 
 <center>
-<img src="abs-int.svg" alt="transformation diagram" width=75%>
+<img src="modeling-domains-figure.svg" alt="model domain diagram" width=100%>
 </center>
 
 <p>
 When designing or analyzing a complex system, several models of that system must be created and evaluated.
 Generating these models is a labor-intensive and error-prone process.
 Furthermore, as the system's architecture evolves through the design process, each model must be updated to reflect the latest changes.
-Model transformation tools can simplify this process by automating some or all of the model creation and update process.
+Metamodeling tools can simplify this process by automating some or all of the model creation and update process.
 <p>
 
 <p>
@@ -54,8 +54,26 @@ To transform models with Abstract Interpretation, we first define a properties d
 that captures the relevant aspects of cyber-physical systems we are concerned with.
 Then we define transformation operations for each modeling domain we desire to operate on, allowing us to abstract system properties
 from these models and to concretize models from a given collection of system properties.
-This process can be proven to be correct; furthermore, we can improve the specificity of our results through the properties of
+This process can be proven to be sound; furthermore, we can improve the specificity of our results through the properties of
 the structures used in this transformation process.
+</p>
+
+<p> <h3>Research</h3>: Software-Based Analysis of the Immunity of Embedded Systems to ESD and EMI</p>
+
+<p>
+Electronics play a large role in modern life, including in safety-critical equipment such as cars and infrastructure.
+Thus, they must be designed to not malfunction or to fail safely.
+Two sources of malfunctions are electrostatic discharge (ESD) and electromagnetic interference (EMI), which can cause software glitches, system crashes, and even permanent hardware damage.
+As this interference results from a system being exposed to extreme electromagnetic fields, it causes hardware faults which manifest as software errors.
+Our goal is to study the software effects of EMI with the intent of detecting EMI events and potentially mitigating the software errors they cause.
+</p>
+
+<p>
+To achieve this goal, we developed a software instrumentation approach which allows us to monitor the operation of system peripherals &mdash; here we focus on USB devices.
+Our instrumentation can monitor the operation of the USB bus controller by taking a series of snapshots of its control settings as traffic flows across the USB bus.
+We can use the data from this instrumentation to guide the development of software that ensures the system continues to operate in a valid and reliable state during and following ESD or EMI interference.
+Information collected by the software will furthermore be used for root-cause analysis of ESD- and EMI-induced failures.
+Our broader goal is to develop a science that will link the traditionally disparate fields of electromagnetic and software engineering, by leveraging the body of knowledge in each field.
 </p>
 
 
